@@ -12,7 +12,7 @@
         naersk-lib = pkgs.callPackage naersk { };
 
         # native deps needed to build libp2p-core
-        native-deps = with pkgs; [ openssl.dev protobuf ];
+        native-deps = with pkgs; [ pkg-config openssl.dev protobuf ];
       in
       {
         defaultPackage = naersk-lib.buildPackage {
