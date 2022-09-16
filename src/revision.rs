@@ -3,17 +3,35 @@ use crate::name::Name;
 pub struct Revision {
   name: Name,
   value: String,
-  seq_no: u128,
+  sequence: u64,
   validity: String,
 }
 
 impl Revision {
   pub fn v0(name: Name, value: String, validity: String) -> Revision {
-    Revision { name, value, validity, seq_no: 0 }
+    Revision { name, value, validity, sequence: 0 }
   }
 
   pub fn increment(&self, value: String) -> Revision {
-    let seq_no = self.seq_no + 1;
-    Revision { name: self.name, value, seq_no: (), validity: self.validity }
+    let sequence = self.sequence + 1;
+    Revision { name: self.name.clone(), value, sequence, validity: self.validity.clone() }
   }
+
+  pub fn name(&self) -> &Name {
+    &self.name
+  }
+
+  pub fn value(&self) -> &str {
+    &self.value
+  }
+
+  pub fn sequence(&self) -> u64 {
+    self.sequence
+  }
+
+  pub fn validity(&self) -> &str {
+    &self.validity
+  }
+
+
 }
