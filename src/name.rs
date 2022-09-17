@@ -9,13 +9,12 @@ const LIBP2P_MULTICODEC: u64 = 0x72;
 /// Name is an IPNS key ID.
 ///
 /// Names can be used to retrieve the latest published value from the W3name service
-/// using the {@link resolve} function.
+/// using [W3NameClient](crate::client::W3NameClient).
 ///
 /// Note that `Name` contains only the public verification key and does not allow publishing
-/// or updating records. To create or update a record, use the `WritableName` type instead.
+/// or updating records. To create or update a record, use the [WritableName] type instead.
 ///
-/// To convert from a string representation of a name to a `Name` object use the [Name::parse] function.
-
+/// To convert from a string representation of a name to a `Name` struct, use the [Name::parse](Self::parse) function.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Name(PublicKey);
 

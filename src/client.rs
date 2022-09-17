@@ -11,8 +11,8 @@ use crate::{
     deserialize_ipns_entry, revision_from_ipns_entry, revision_to_ipns_entry, serialize_ipns_entry,
     validate_ipns_entry, IpnsError,
   },
-  name::Name,
-  revision::Revision,
+  Name,
+  Revision,
   WritableName,
 };
 

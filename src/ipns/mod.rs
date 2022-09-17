@@ -1,6 +1,6 @@
 use std::str::{from_utf8, Utf8Error};
 
-use crate::{ipns_pb::IpnsEntry, revision::Revision, Name};
+use crate::{ipns_pb::IpnsEntry, Revision, Name};
 
 use chrono::{DateTime, ParseError, Utc};
 use libipld::cbor::DagCborCodec;
