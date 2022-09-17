@@ -1,8 +1,10 @@
-use reqwest::{Client, Url};
+use std::f64::consts::E;
+
+use reqwest::{Client, Url, Response};
 use governor::{RateLimiter, Quota, state::{NotKeyed, InMemoryState}, clock::DefaultClock};
 use nonzero_ext::nonzero;
 
-use crate::{revision::Revision, name::Name};
+use crate::{revision::Revision, name::Name, ipns::{revision_to_ipns_entry, IpnsError, serialize_ipns_entry}, WritableName};
 
 const DEFAULT_ENDPOINT: &str = "https://name.web3.storage";
 const RATE_LIMIT_REQUESTS: u32 = 30;
@@ -22,16 +24,26 @@ impl W3NameClient {
     }
   }
 
-  pub async fn publish(&self, revision: Revision) -> Result<(), ServiceError> {
+  pub async fn publish(&self, name: &WritableName, revision: &Revision) -> Result<(), ServiceError> {
     let mut url = self.endpoint.clone();
     url.set_path(revision.name().to_string().as_str());
 
+    let entry = revision_to_ipns_entry(revision, name.keypair())?;
+    let encoded = serialize_ipns_entry(&entry)?;
+    let body = base64::encode(encoded);
+
     self.limiter.until_ready().await;
-    // self.http.post(url);
+    
+    let res = self.http.post(url)
+      .body(body)
+      .send()
+      .await?;
 
-    // TODO: need to create IPNS record body
-
-    todo!()
+    if res.status().is_success() {
+      Ok(())
+    } else {
+      Err(error_from_response(res).await)
+    }
   }
 
   pub async fn resolve(name: Name) -> Result<Revision, ServiceError> {
@@ -46,6 +58,35 @@ impl Default for W3NameClient {
   }
 }
 
+#[derive(Debug, serde::Deserialize)]
+struct APIErrorResponse {
+  message: String
+}
+
+#[derive(Debug)]
 pub enum ServiceError {
-  GenericError(String)
+  GenericError(String),
+
+  APIError(String),
+  RequestError(reqwest::Error),
+  Ipns(IpnsError),
+}
+
+impl From<reqwest::Error> for ServiceError {
+  fn from(e: reqwest::Error) -> Self {
+    ServiceError::RequestError(e)
+  }
+}
+
+impl From<IpnsError> for ServiceError {
+  fn from(e: IpnsError) -> Self {
+    ServiceError::Ipns(e)
+  }
+}
+
+async fn error_from_response(res: Response) -> ServiceError {
+  match res.json::<APIErrorResponse>().await {
+    Ok(json) => ServiceError::APIError(json.message),
+    Err(e) => ServiceError::GenericError(format!("unexpected response from API, unable to parse error message: {e}"))
+  }
 }

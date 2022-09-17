@@ -1,12 +1,13 @@
 use libp2p_core::identity::Keypair;
+use prost::Message;
 
-use crate::{ipns_pb::IpnsEntry, revision::Revision, name::WritableName};
+use crate::{ipns_pb::IpnsEntry, revision::Revision};
 use std::collections::BTreeMap;
 use libipld::ipld::Ipld;
 use libipld::prelude::Codec;
 use libipld::cbor::DagCborCodec;
 
-pub fn revision_to_ipns_entry(revision: &Revision, signer: Keypair) -> Result<IpnsEntry, IpnsError> {
+pub fn revision_to_ipns_entry(revision: &Revision, signer: &Keypair) -> Result<IpnsEntry, IpnsError> {
   let value = revision.value().as_bytes().to_vec();
   let validity = revision.validity().as_bytes().to_vec();
   let ttl: u64 = 0; // TODO: set based on expiration time
@@ -29,6 +30,13 @@ pub fn revision_to_ipns_entry(revision: &Revision, signer: Keypair) -> Result<Ip
   Ok(entry)
 }
 
+pub fn serialize_ipns_entry(entry: &IpnsEntry) -> Result<Vec<u8>, IpnsError> {
+  let mut buf = Vec::new();
+  buf.reserve(entry.encoded_len());
+  entry.encode(&mut buf).map_err(|_| IpnsError::ProtobufEncodingError)?;
+  Ok(buf)
+}
+
 
 fn create_v1_signature(signer: &Keypair, value_bytes: &[u8], validity_bytes: &[u8]) -> Result<Vec<u8>, IpnsError> {
   let mut buf = value_bytes.to_vec();
@@ -49,7 +57,9 @@ fn create_v2_signature(signer: &Keypair, value: &str, validity: &str, sequence: 
   signer.sign(&encoded).map_err(|_| IpnsError::SigningError)
 }
 
+#[derive(Debug)]
 pub enum IpnsError {
   SigningError,
   CborEncodingError,
+  ProtobufEncodingError,
 }

@@ -1,4 +1,4 @@
-use libp2p_core::identity::{Keypair, PublicKey, ed25519};
+use libp2p_core::identity::{Keypair, PublicKey};
 use multihash::derive::Multihash;
 use multihash::MultihashDigest;
 use multibase::Base;
@@ -27,8 +27,7 @@ impl Name {
     }
 
     let key_bytes = c.hash().digest();
-    let ed_pk = ed25519::PublicKey::decode(key_bytes).map_err(|_| NameError::InvalidKey)?;
-    let pk = PublicKey::Ed25519(ed_pk);
+    let pk = PublicKey::from_protobuf_encoding(key_bytes).map_err(|_| NameError::InvalidKey)?;
     Ok(Name(pk))
   }
 
@@ -43,7 +42,7 @@ impl Name {
   }
 
   pub fn to_string(&self) -> String {
-    self.to_cid().to_string_of_base(Base::Base36Upper).unwrap()
+    self.to_cid().to_string_of_base(Base::Base36Lower).unwrap()
   }
 }
 
@@ -51,9 +50,15 @@ impl Name {
 pub struct WritableName(Keypair);
 
 impl WritableName {
-  pub fn from_private_key_bytes(key_bytes: &mut [u8]) -> Result<WritableName, NameError> {
-    let kp = ed25519::Keypair::decode(key_bytes).map_err(|_| NameError::InvalidKey)?;
-    Ok(WritableName(Keypair::Ed25519(kp)))
+  pub fn new() -> WritableName {
+    let kp = Keypair::generate_ed25519();
+    WritableName(kp)
+  }
+
+  pub fn from_private_key(key_bytes: &[u8]) -> Result<WritableName, NameError> {
+    let mut kb = key_bytes.to_vec(); // from_protobuf_encoding takes &mut, so clone instead of requiring the same
+    let kp = Keypair::from_protobuf_encoding(&mut kb).map_err(|_| NameError::InvalidKey)?;
+    Ok(WritableName(kp))
   }
 
   pub fn keypair(&self) -> &Keypair {
@@ -77,13 +82,7 @@ impl WritableName {
   }
 }
 
-impl WritableName {
-  pub fn new() -> WritableName {
-    let kp = Keypair::generate_ed25519();
-    WritableName(kp)
-  }
-}
-
+#[derive(Debug, PartialEq)]
 pub enum NameError {
   InvalidCidString,
   InvalidMulticodec,
@@ -95,4 +94,47 @@ pub enum NameError {
 enum Hasher {
   #[mh(code = 0x0, hasher = multihash::IdentityHasher::<64>)]
   Identity
+}
+
+#[cfg(test)]
+mod tests {
+  use std::str::FromStr;
+
+use super::*;
+use base64;
+
+  #[test]
+  fn create_writable_name() {
+    let name = WritableName::new();
+
+    let cid = Cid::from_str(name.to_string().as_str()).unwrap();
+    assert_eq!(cid.codec(), LIBP2P_MULTICODEC);
+    assert_eq!(cid.hash().code(), 0x0); // identity hash code
+    assert_eq!(cid, name.to_cid());
+  }
+
+  #[test]
+  fn writable_name_from_private_key() {
+    let name_str = "k51qzi5uqu5dkgso0xihmnkn1sthxgs3nilzmofwy29jrplwdtk6sc14x9f2zv";
+    let private_key_base64 = "CAESQI8NcJgBK+9qfSBz/ZiXNuw4OJkUTn4jWZvd3Sj8W6GLq900cwz32d6ylbqBl81WRgM6QvSEXMwGlEODgEkXCes=";
+    let private_key = base64::decode(private_key_base64).unwrap();
+    let name = WritableName::from_private_key(&private_key).unwrap();
+    assert_eq!(name.to_string(), name_str);
+  }
+
+  #[test]
+  fn parse_name() {
+    let name_str = "k51qzi5uqu5dl2hq2hm5m29sdq1lum0kb0lmyqsowicmrmxzxywwgxhy6ymrdv";
+    let name = Name::parse(name_str).expect("parse error");
+    assert_eq!(name_str, name.to_string());
+
+    // it fails to parse a CIDv0
+    let invalid_cidv0 = "QmPFpDRC87jTdSYxjnEZUTjJuYF5yLRWxir3DzJ1XiVZ3t";
+    assert_eq!(Name::parse(invalid_cidv0), Err(NameError::InvalidMulticodec));
+
+    // it fails to parse a non libp2p-key codec name
+    let invalid = "k2jmtxx8tc9pv6b9sj5wm71mheawu849x2bzkjuecpwizjwjeufiadl6";
+    assert_eq!(Name::parse(invalid), Err(NameError::InvalidMulticodec));
+  }
+
 }
