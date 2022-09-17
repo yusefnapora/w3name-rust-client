@@ -4,7 +4,7 @@ use reqwest::{Client, Url, Response};
 use governor::{RateLimiter, Quota, state::{NotKeyed, InMemoryState}, clock::DefaultClock};
 use nonzero_ext::nonzero;
 
-use crate::{revision::Revision, name::Name, ipns::{revision_to_ipns_entry, IpnsError, serialize_ipns_entry}, WritableName};
+use crate::{revision::Revision, name::Name, ipns::{revision_to_ipns_entry, IpnsError, serialize_ipns_entry, deserialize_ipns_entry, revision_from_ipns_entry, validate_ipns_entry}, WritableName};
 
 const DEFAULT_ENDPOINT: &str = "https://name.web3.storage";
 const RATE_LIMIT_REQUESTS: u32 = 30;
@@ -26,7 +26,7 @@ impl W3NameClient {
 
   pub async fn publish(&self, name: &WritableName, revision: &Revision) -> Result<(), ServiceError> {
     let mut url = self.endpoint.clone();
-    url.set_path(revision.name().to_string().as_str());
+    url.set_path(format!("name/{}", name.to_string()).as_str());
 
     let entry = revision_to_ipns_entry(revision, name.keypair())?;
     let encoded = serialize_ipns_entry(&entry)?;
@@ -46,8 +46,16 @@ impl W3NameClient {
     }
   }
 
-  pub async fn resolve(name: Name) -> Result<Revision, ServiceError> {
-    todo!()
+  pub async fn resolve(&self, name: Name) -> Result<Revision, ServiceError> {
+    let mut url = self.endpoint.clone();
+    url.set_path(format!("name/{}", name.to_string()).as_str());
+
+    self.limiter.until_ready().await;
+    let res = self.http.get(url)
+      .send()
+      .await?;
+
+    parse_resolve_response(res).await
   }
 }
 
@@ -58,9 +66,24 @@ impl Default for W3NameClient {
   }
 }
 
+async fn parse_resolve_response(res: Response) -> Result<Revision, ServiceError> {
+  let r = res.json::<ResolveResponse>().await?;
+  let entry_bytes = base64::decode(r.record).map_err(|_| ServiceError::GenericError("unable to base64 decode record in response".to_string()))?;
+  let entry = deserialize_ipns_entry(&entry_bytes)?;
+  validate_ipns_entry(&entry)?;
+
+  let revision = revision_from_ipns_entry(&entry)?;
+  Ok(revision)
+}
+
 #[derive(Debug, serde::Deserialize)]
 struct APIErrorResponse {
   message: String
+}
+
+#[derive(Debug, serde::Deserialize)]
+struct ResolveResponse {
+  record: String
 }
 
 #[derive(Debug)]

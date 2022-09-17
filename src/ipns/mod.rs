@@ -37,6 +37,17 @@ pub fn serialize_ipns_entry(entry: &IpnsEntry) -> Result<Vec<u8>, IpnsError> {
   Ok(buf)
 }
 
+pub fn deserialize_ipns_entry(entry_bytes: &[u8]) -> Result<IpnsEntry, IpnsError> {
+  todo!()
+}
+
+pub fn validate_ipns_entry(entry: &IpnsEntry) -> Result<(), IpnsError> {
+  todo!()
+}
+
+pub fn revision_from_ipns_entry(entry: &IpnsEntry) -> Result<Revision, IpnsError> {
+  todo!()
+}
 
 fn create_v1_signature(signer: &Keypair, value_bytes: &[u8], validity_bytes: &[u8]) -> Result<Vec<u8>, IpnsError> {
   let mut buf = value_bytes.to_vec();
