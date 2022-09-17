@@ -1,8 +1,8 @@
+use cid::Cid;
 use libp2p_core::identity::{Keypair, PublicKey};
+use multibase::Base;
 use multihash::derive::Multihash;
 use multihash::MultihashDigest;
-use multibase::Base;
-use cid::Cid;
 
 const LIBP2P_MULTICODEC: u64 = 0x72;
 
@@ -16,7 +16,7 @@ const LIBP2P_MULTICODEC: u64 = 0x72;
 ///
 /// To convert from a string representation of a name to a `Name` object use the [Name::parse] function.
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Name(PublicKey);
 
 impl Name {
@@ -97,15 +97,15 @@ pub enum NameError {
 #[mh(alloc_size = 64)]
 enum Hasher {
   #[mh(code = 0x0, hasher = multihash::IdentityHasher::<64>)]
-  Identity
+  Identity,
 }
 
 #[cfg(test)]
 mod tests {
   use std::str::FromStr;
 
-use super::*;
-use base64;
+  use super::*;
+  use base64;
 
   #[test]
   fn create_writable_name() {
@@ -134,11 +134,13 @@ use base64;
 
     // it fails to parse a CIDv0
     let invalid_cidv0 = "QmPFpDRC87jTdSYxjnEZUTjJuYF5yLRWxir3DzJ1XiVZ3t";
-    assert_eq!(Name::parse(invalid_cidv0), Err(NameError::InvalidMulticodec));
+    assert_eq!(
+      Name::parse(invalid_cidv0),
+      Err(NameError::InvalidMulticodec)
+    );
 
     // it fails to parse a non libp2p-key codec name
     let invalid = "k2jmtxx8tc9pv6b9sj5wm71mheawu849x2bzkjuecpwizjwjeufiadl6";
     assert_eq!(Name::parse(invalid), Err(NameError::InvalidMulticodec));
   }
-
 }
