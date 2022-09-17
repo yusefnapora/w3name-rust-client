@@ -57,7 +57,7 @@ impl W3NameClient {
     }
   }
 
-  pub async fn resolve(&self, name: Name) -> Result<Revision, ServiceError> {
+  pub async fn resolve(&self, name: &Name) -> Result<Revision, ServiceError> {
     let mut url = self.endpoint.clone();
     url.set_path(format!("name/{}", name.to_string()).as_str());
 
@@ -104,6 +104,20 @@ pub enum ServiceError {
   APIError(String),
   RequestError(reqwest::Error),
   Ipns(IpnsError),
+}
+
+impl std::error::Error for ServiceError {}
+
+impl std::fmt::Display for ServiceError {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    use ServiceError::*;
+    match self {
+        GenericError(msg) => write!(f, "error: {}", msg),
+        APIError(msg) => write!(f, "api error: {}", msg),
+        RequestError(err) => write!(f, "request error: {}", err),
+        Ipns(err) => write!(f, "ipns error: {}", err),
+    }
+  }
 }
 
 impl From<reqwest::Error> for ServiceError {

@@ -92,6 +92,19 @@ pub enum NameError {
   InvalidKey,
 }
 
+impl std::error::Error for NameError {}
+
+impl std::fmt::Display for NameError {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    use NameError::*;
+    match self {
+        InvalidCidString => write!(f, "invalid CID string"),
+        InvalidMulticodec => write!(f, "invalid multicodec value"),
+        InvalidKey => write!(f, "invalid key"),
+    }
+  }
+}
+
 #[derive(Clone, Copy, Debug, Eq, Multihash, PartialEq)]
 #[mh(alloc_size = 64)]
 enum Hasher {
