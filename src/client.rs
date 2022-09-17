@@ -1,5 +1,3 @@
-use std::f64::consts::E;
-
 use reqwest::{Client, Url, Response};
 use governor::{RateLimiter, Quota, state::{NotKeyed, InMemoryState}, clock::DefaultClock};
 use nonzero_ext::nonzero;
@@ -55,7 +53,7 @@ impl W3NameClient {
       .send()
       .await?;
 
-    parse_resolve_response(res).await
+    parse_resolve_response(&name, res).await
   }
 }
 
@@ -66,11 +64,11 @@ impl Default for W3NameClient {
   }
 }
 
-async fn parse_resolve_response(res: Response) -> Result<Revision, ServiceError> {
+async fn parse_resolve_response(name: &Name, res: Response) -> Result<Revision, ServiceError> {
   let r = res.json::<ResolveResponse>().await?;
   let entry_bytes = base64::decode(r.record).map_err(|_| ServiceError::GenericError("unable to base64 decode record in response".to_string()))?;
   let entry = deserialize_ipns_entry(&entry_bytes)?;
-  validate_ipns_entry(&entry)?;
+  validate_ipns_entry(&entry, name.public_key())?;
 
   let revision = revision_from_ipns_entry(&entry)?;
   Ok(revision)

@@ -31,6 +31,10 @@ impl Name {
     Ok(Name(pk))
   }
 
+  pub fn public_key(&self) -> &PublicKey {
+    &self.0
+  }
+
   pub fn to_cid(&self) -> Cid {
     let key_bytes = self.0.to_protobuf_encoding();
     let hash = Hasher::Identity.digest(&key_bytes[..]);
