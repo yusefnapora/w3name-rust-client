@@ -2254,6 +2254,7 @@ name = "w3name-cli"
 version = "0.1.0"
 dependencies = [
  "clap",
+ "error-stack",
  "tokio",
  "w3name",
 ]

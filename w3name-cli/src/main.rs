@@ -1,6 +1,8 @@
-use std::{error::Error, fs, path::PathBuf};
+use std::{error::Error, fs, path::PathBuf, fmt::Display};
 
 use clap::{Parser, Subcommand};
+use error_stack::{Result, ResultExt, IntoReport};
+
 use w3name::{Name, Revision, W3NameClient, WritableName};
 
 #[derive(Parser)]
@@ -51,31 +53,31 @@ async fn main() {
   }
 }
 
-async fn resolve(name_str: &str) -> Result<(), Box<dyn Error>> {
+async fn resolve(name_str: &str) -> Result<(), CliError> {
   let client = W3NameClient::default();
-  let name = Name::parse(name_str)?;
-  let revision = client.resolve(&name).await?;
+  let name = Name::parse(name_str).change_context(CliError)?;
+  let revision = client.resolve(&name).await.change_context(CliError)?;
 
   println!("{}", revision.value());
   Ok(())
 }
 
-fn create(output: &Option<PathBuf>) -> Result<(), Box<dyn Error>> {
+fn create(output: &Option<PathBuf>) -> Result<(), CliError> {
   let name = WritableName::new();
   let output = output
     .clone()
     .unwrap_or_else(|| PathBuf::from(format!("{}.key", name.to_string())));
 
-  let bytes = name.keypair().to_protobuf_encoding()?;
-  fs::write(&output, bytes)?;
+  let bytes = name.keypair().to_protobuf_encoding().report().change_context(CliError)?;
+  fs::write(&output, bytes).report().change_context(CliError)?;
   println!("wrote new keypair to {}", output.display());
   Ok(())
 }
 
-async fn publish(key_file: &PathBuf, value: &str) -> Result<(), Box<dyn Error>> {
+async fn publish(key_file: &PathBuf, value: &str) -> Result<(), CliError> {
   let client = W3NameClient::default();
-  let key_bytes = fs::read(key_file)?;
-  let writable = WritableName::from_private_key(&key_bytes)?;
+  let key_bytes = fs::read(key_file).report().change_context(CliError)?;
+  let writable = WritableName::from_private_key(&key_bytes).change_context(CliError)?;
 
   // to avoid having to keep old revisions around, we first try to resolve and increment any existing records
   let new_revision = match client.resolve(&writable.to_name()).await {
@@ -83,7 +85,7 @@ async fn publish(key_file: &PathBuf, value: &str) -> Result<(), Box<dyn Error>> 
     Err(_) => Revision::v0(&writable.to_name(), value),
   };
 
-  client.publish(&writable, &new_revision).await?;
+  client.publish(&writable, &new_revision).await.change_context(CliError)?;
 
   println!(
     "published new value for key {}: {}",
@@ -92,3 +94,15 @@ async fn publish(key_file: &PathBuf, value: &str) -> Result<(), Box<dyn Error>> 
   );
   Ok(())
 }
+
+
+#[derive(Debug)]
+struct CliError;
+
+impl Display for CliError {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    write!(f, "error")
+  }
+}
+
+impl Error for CliError {}

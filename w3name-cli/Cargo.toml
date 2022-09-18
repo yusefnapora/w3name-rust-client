@@ -8,5 +8,6 @@ edition = "2021"
 [dependencies]
 clap = { version = "3.2.22", features = ["derive"] }
 tokio = { version = "1", features = ["full"] }
+error-stack = "0.1.1"
 
 w3name = { path = "../w3name" }
