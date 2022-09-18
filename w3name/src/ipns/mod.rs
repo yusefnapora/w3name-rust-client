@@ -1,10 +1,17 @@
-use std::str::{from_utf8, Utf8Error};
-
-use crate::{ipns_pb::IpnsEntry, Name, Revision};
-
-use chrono::{DateTime, ParseError, Utc};
+use crate::{
+  error::{
+    CborError, InvalidIpnsV1Signature, InvalidIpnsV2Signature, InvalidIpnsV2SignatureData,
+    IpnsError, SigningError,
+  },
+  ipns_pb::IpnsEntry,
+  Name, Revision,
+};
+use chrono::{DateTime, Utc};
 use libp2p_core::identity::{Keypair, PublicKey};
 use prost::Message;
+use std::str::from_utf8;
+
+use error_stack::{report, IntoReport, Result, ResultExt};
 
 pub fn revision_to_ipns_entry(
   revision: &Revision,
@@ -16,14 +23,15 @@ pub fn revision_to_ipns_entry(
   let duration = revision.validity().signed_duration_since(Utc::now());
   let ttl: u64 = duration.num_nanoseconds().unwrap_or(i64::MAX) as u64;
 
-  let signature = create_v1_signature(&signer, &value, &validity)?;
+  let signature = create_v1_signature(&signer, &value, &validity).change_context(IpnsError)?;
   let data = v2_signature_data(
     revision.value(),
     &revision.validity_string(),
     revision.sequence(),
     ttl,
-  )?;
-  let signature_v2 = create_v2_signature(&signer, &data)?;
+  )
+  .change_context(IpnsError)?;
+  let signature_v2 = create_v2_signature(&signer, &data).change_context(IpnsError)?;
   let entry = IpnsEntry {
     value: Some(value),
     validity: Some(validity),
@@ -43,12 +51,14 @@ pub fn revision_to_ipns_entry(
 pub fn serialize_ipns_entry(entry: &IpnsEntry) -> Result<Vec<u8>, IpnsError> {
   let mut buf = Vec::new();
   buf.reserve(entry.encoded_len());
-  entry.encode(&mut buf)?;
+  entry.encode(&mut buf).report().change_context(IpnsError)?;
   Ok(buf)
 }
 
 pub fn deserialize_ipns_entry(entry_bytes: &[u8]) -> Result<IpnsEntry, IpnsError> {
-  let entry = IpnsEntry::decode(entry_bytes)?;
+  let entry = IpnsEntry::decode(entry_bytes)
+    .report()
+    .change_context(IpnsError)?;
   Ok(entry)
 }
 
@@ -56,19 +66,25 @@ pub fn validate_ipns_entry(entry: &IpnsEntry, public_key: &PublicKey) -> Result<
   if entry.signature_v2.is_some() && entry.data.is_some() {
     let sig = entry.signature_v2();
     let data = entry.data();
-    validate_v2_signature(public_key, sig, data)?;
-    validate_v2_data_matches_entry_data(entry)?;
+    validate_v2_signature(public_key, sig, data).change_context(IpnsError)?;
+    validate_v2_data_matches_entry_data(entry).change_context(IpnsError)?;
 
     return Ok(());
   }
 
-  validate_v1_signature(entry, public_key)
+  validate_v1_signature(entry, public_key).change_context(IpnsError)
 }
 
 pub fn revision_from_ipns_entry(entry: &IpnsEntry, name: &Name) -> Result<Revision, IpnsError> {
-  let value = from_utf8(entry.value())?;
-  let validity_str = from_utf8(entry.validity())?;
-  let validity = DateTime::parse_from_rfc3339(validity_str)?;
+  let value = from_utf8(entry.value())
+    .report()
+    .change_context(IpnsError)?;
+  let validity_str = from_utf8(entry.validity())
+    .report()
+    .change_context(IpnsError)?;
+  let validity = DateTime::parse_from_rfc3339(validity_str)
+    .report()
+    .change_context(IpnsError)?;
 
   let rev = Revision::new(name, value, validity.into(), entry.sequence());
   Ok(rev)
@@ -86,7 +102,7 @@ fn v2_signature_data(
   validity: &str,
   sequence: u64,
   ttl: u64,
-) -> Result<Vec<u8>, IpnsError> {
+) -> Result<Vec<u8>, CborError> {
   let data = SignatureV2Data {
     Value: value.as_bytes().to_vec(),
     Validity: validity.as_bytes().to_vec(),
@@ -94,45 +110,59 @@ fn v2_signature_data(
     Sequence: sequence,
     TTL: ttl,
   };
-  let encoded = serde_cbor::to_vec(&data)?;
+  let encoded = serde_cbor::to_vec(&data)
+    .report()
+    .change_context(CborError)?;
 
   Ok(encoded)
 }
 
-fn validate_v2_signature(public_key: &PublicKey, sig: &[u8], data: &[u8]) -> Result<(), IpnsError> {
+fn validate_v2_signature(
+  public_key: &PublicKey,
+  sig: &[u8],
+  data: &[u8],
+) -> Result<(), InvalidIpnsV2Signature> {
   let mut msg = "ipns-signature:".as_bytes().to_vec();
   msg.extend_from_slice(data);
   if public_key.verify(&msg, sig) {
     Ok(())
   } else {
-    Err(IpnsError::InvalidSignatureV2)
+    Err(report!(InvalidIpnsV2Signature))
   }
 }
 
-fn validate_v2_data_matches_entry_data(entry: &IpnsEntry) -> Result<(), IpnsError> {
+fn validate_v2_data_matches_entry_data(
+  entry: &IpnsEntry,
+) -> Result<(), InvalidIpnsV2SignatureData> {
   if entry.data.is_none() {
-    return Err(IpnsError::InvalidSignatureV2);
+    return Err(report!(InvalidIpnsV2SignatureData));
   }
 
-  let data: SignatureV2Data = serde_cbor::from_slice(entry.data())?;
+  let data: SignatureV2Data = serde_cbor::from_slice(entry.data())
+    .report()
+    .change_context(InvalidIpnsV2SignatureData)?;
   if entry.value() != &data.Value
     || entry.validity() != &data.Validity
     || entry.sequence() != data.Sequence
     || entry.ttl() != data.TTL
     || entry.validity_type != Some(data.ValidityType)
   {
-    return Err(IpnsError::SignatureV2DataMismatch);
+    Err(report!(InvalidIpnsV2SignatureData))
+  } else {
+    Ok(())
   }
-  Ok(())
 }
 
-fn validate_v1_signature(entry: &IpnsEntry, public_key: &PublicKey) -> Result<(), IpnsError> {
+fn validate_v1_signature(
+  entry: &IpnsEntry,
+  public_key: &PublicKey,
+) -> Result<(), InvalidIpnsV1Signature> {
   let data = v1_signature_data(entry.value(), entry.validity());
   let sig = entry.signature();
   if public_key.verify(&data, sig) {
     Ok(())
   } else {
-    Err(IpnsError::InvalidSignatureV1)
+    Err(report!(InvalidIpnsV1Signature))
   }
 }
 
@@ -140,86 +170,17 @@ fn create_v1_signature(
   signer: &Keypair,
   value_bytes: &[u8],
   validity_bytes: &[u8],
-) -> Result<Vec<u8>, IpnsError> {
+) -> Result<Vec<u8>, SigningError> {
   let msg = v1_signature_data(value_bytes, validity_bytes);
-  let sig = signer.sign(&msg)?;
+  let sig = signer.sign(&msg).report().change_context(SigningError)?;
   Ok(sig)
 }
 
-fn create_v2_signature(signer: &Keypair, sig_data: &[u8]) -> Result<Vec<u8>, IpnsError> {
+fn create_v2_signature(signer: &Keypair, sig_data: &[u8]) -> Result<Vec<u8>, SigningError> {
   let mut msg = "ipns-signature:".as_bytes().to_vec();
   msg.extend_from_slice(sig_data);
-  let sig = signer.sign(&msg)?;
+  let sig = signer.sign(&msg).report().change_context(SigningError)?;
   Ok(sig)
-}
-
-#[derive(Debug)]
-pub enum IpnsError {
-  SigningError(libp2p_core::identity::error::SigningError),
-  CborEncodingError(serde_cbor::Error),
-  ProtobufEncodingError(prost::EncodeError),
-  ProtobufDecodingError(prost::DecodeError),
-  InvalidSignatureV1,
-  InvalidSignatureV2,
-  SignatureV2DataMismatch,
-
-  InvalidUtf8(Utf8Error),
-  InvalidDateString(ParseError),
-}
-
-impl std::error::Error for IpnsError {}
-
-impl std::fmt::Display for IpnsError {
-  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-    use IpnsError::*;
-    match self {
-      SigningError(err) => write!(f, "signing error: {}", err),
-      CborEncodingError(err) => write!(f, "cbor errro: {}", err),
-      ProtobufEncodingError(err) => write!(f, "protobuf encoding error: {}", err),
-      ProtobufDecodingError(err) => write!(f, "protobuf decoding error: {}", err),
-      InvalidSignatureV1 => write!(f, "invalid IPNS signature (version 1)"),
-      InvalidSignatureV2 => write!(f, "invalid IPNS signature (version 2)"),
-      SignatureV2DataMismatch => write!(f, "IPNS signature data does not match IPNS record values"),
-      InvalidUtf8(err) => write!(f, "invalid UTF-8 string in IPNS record: {}", err),
-      InvalidDateString(err) => write!(f, "invalid date string: {}", err),
-    }
-  }
-}
-
-impl From<serde_cbor::Error> for IpnsError {
-  fn from(e: serde_cbor::Error) -> Self {
-    IpnsError::CborEncodingError(e)
-  }
-}
-
-impl From<libp2p_core::identity::error::SigningError> for IpnsError {
-  fn from(e: libp2p_core::identity::error::SigningError) -> Self {
-    IpnsError::SigningError(e)
-  }
-}
-
-impl From<prost::EncodeError> for IpnsError {
-  fn from(e: prost::EncodeError) -> Self {
-    IpnsError::ProtobufEncodingError(e)
-  }
-}
-
-impl From<prost::DecodeError> for IpnsError {
-  fn from(e: prost::DecodeError) -> Self {
-    IpnsError::ProtobufDecodingError(e)
-  }
-}
-
-impl From<Utf8Error> for IpnsError {
-  fn from(e: Utf8Error) -> Self {
-    IpnsError::InvalidUtf8(e)
-  }
-}
-
-impl From<ParseError> for IpnsError {
-  fn from(e: ParseError) -> Self {
-    IpnsError::InvalidDateString(e)
-  }
 }
 
 #[allow(non_snake_case)]

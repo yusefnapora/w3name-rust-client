@@ -1,4 +1,5 @@
 mod client;
+pub mod error;
 mod ipns;
 mod name;
 mod revision;
@@ -8,6 +9,6 @@ mod ipns_pb {
   include!(concat!(env!("OUT_DIR"), "/ipns_pb.rs"));
 }
 
-pub use client::{ServiceError, W3NameClient};
-pub use name::{Name, NameError, WritableName};
+pub use client::W3NameClient;
+pub use name::{Name, WritableName};
 pub use revision::Revision;

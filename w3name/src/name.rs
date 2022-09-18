@@ -4,6 +4,11 @@ use multibase::Base;
 use multihash::derive::Multihash;
 use multihash::MultihashDigest;
 
+// we need to rename Result here, because the multihash derive macro gets confused otherwise
+use error_stack::{report, IntoReport, Result as ResultStack, ResultExt};
+
+use crate::error::{InvalidCidString, InvalidMulticodecCode, NameError};
+
 const LIBP2P_MULTICODEC: u64 = 0x72;
 
 /// Name is an IPNS key ID.
@@ -19,14 +24,20 @@ const LIBP2P_MULTICODEC: u64 = 0x72;
 pub struct Name(PublicKey);
 
 impl Name {
-  pub fn parse<S: AsRef<str>>(s: S) -> Result<Name, NameError> {
-    let c = Cid::try_from(s.as_ref()).map_err(|_| NameError::InvalidCidString)?;
+  pub fn parse<S: AsRef<str>>(s: S) -> ResultStack<Name, NameError> {
+    let res = Cid::try_from(s.as_ref());
+    let c = res
+      .map_err(|_| InvalidCidString)
+      .report()
+      .change_context(NameError)?;
     if c.codec() != LIBP2P_MULTICODEC {
-      return Err(NameError::InvalidMulticodec);
+      return Err(report!(InvalidMulticodecCode).change_context(NameError));
     }
 
     let key_bytes = c.hash().digest();
-    let pk = PublicKey::from_protobuf_encoding(key_bytes).map_err(|_| NameError::InvalidKey)?;
+    let pk = PublicKey::from_protobuf_encoding(key_bytes)
+      .report()
+      .change_context(NameError)?;
     Ok(Name(pk))
   }
 
@@ -58,9 +69,11 @@ impl WritableName {
     WritableName(kp)
   }
 
-  pub fn from_private_key(key_bytes: &[u8]) -> Result<WritableName, NameError> {
+  pub fn from_private_key(key_bytes: &[u8]) -> ResultStack<WritableName, NameError> {
     let mut kb = key_bytes.to_vec(); // from_protobuf_encoding takes &mut, so clone instead of requiring the same
-    let kp = Keypair::from_protobuf_encoding(&mut kb).map_err(|_| NameError::InvalidKey)?;
+    let kp = Keypair::from_protobuf_encoding(&mut kb)
+      .report()
+      .change_context(NameError)?;
     Ok(WritableName(kp))
   }
 
@@ -82,26 +95,6 @@ impl WritableName {
 
   pub fn to_string(&self) -> String {
     self.to_name().to_string()
-  }
-}
-
-#[derive(Debug, PartialEq)]
-pub enum NameError {
-  InvalidCidString,
-  InvalidMulticodec,
-  InvalidKey,
-}
-
-impl std::error::Error for NameError {}
-
-impl std::fmt::Display for NameError {
-  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-    use NameError::*;
-    match self {
-      InvalidCidString => write!(f, "invalid CID string"),
-      InvalidMulticodec => write!(f, "invalid multicodec value"),
-      InvalidKey => write!(f, "invalid key"),
-    }
   }
 }
 
@@ -146,13 +139,10 @@ mod tests {
 
     // it fails to parse a CIDv0
     let invalid_cidv0 = "QmPFpDRC87jTdSYxjnEZUTjJuYF5yLRWxir3DzJ1XiVZ3t";
-    assert_eq!(
-      Name::parse(invalid_cidv0),
-      Err(NameError::InvalidMulticodec)
-    );
+    assert!(Name::parse(invalid_cidv0).is_err());
 
     // it fails to parse a non libp2p-key codec name
     let invalid = "k2jmtxx8tc9pv6b9sj5wm71mheawu849x2bzkjuecpwizjwjeufiadl6";
-    assert_eq!(Name::parse(invalid), Err(NameError::InvalidMulticodec));
+    assert!(Name::parse(invalid).is_err());
   }
 }
