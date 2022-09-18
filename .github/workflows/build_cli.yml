@@ -1,0 +1,33 @@
+# build w3name-cli binaries for mac, linux & windows
+# TODO: trigger on github release action and upload binaries as release artifacts
+
+on: [push]
+
+name: Cargo build
+
+jobs:
+  build_and_test:
+    name: Build w3name-cli 
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        target:
+          - x86_64-unknown-linux-gnu
+          - x86_64-pc-windows-gnu
+          - x86_64-apple-darwin
+          - aarch64-unknown-linux-gnu
+          - aarch64-apple-darwin
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          target: ${{ matrix.target }}
+          override: true
+      - uses: actions-rs/cargo@v1
+        with:
+          use-cross: true
+          command: build
+          args: --release --target ${{ matrix.target }}
+
+
