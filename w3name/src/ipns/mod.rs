@@ -1,6 +1,6 @@
 use std::str::{from_utf8, Utf8Error};
 
-use crate::{ipns_pb::IpnsEntry, Revision, Name};
+use crate::{ipns_pb::IpnsEntry, Name, Revision};
 
 use chrono::{DateTime, ParseError, Utc};
 use libp2p_core::identity::{Keypair, PublicKey};
@@ -96,7 +96,6 @@ fn v2_signature_data(
   };
   let encoded = serde_cbor::to_vec(&data)?;
 
-
   Ok(encoded)
 }
 
@@ -174,15 +173,15 @@ impl std::fmt::Display for IpnsError {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
     use IpnsError::*;
     match self {
-        SigningError(err) => write!(f, "signing error: {}", err),
-        CborEncodingError(err) => write!(f, "cbor errro: {}", err),
-        ProtobufEncodingError(err) => write!(f, "protobuf encoding error: {}", err),
-        ProtobufDecodingError(err) => write!(f, "protobuf decoding error: {}", err),
-        InvalidSignatureV1 => write!(f, "invalid IPNS signature (version 1)"),
-        InvalidSignatureV2 => write!(f, "invalid IPNS signature (version 2)"),
-        SignatureV2DataMismatch => write!(f, "IPNS signature data does not match IPNS record values"),
-        InvalidUtf8(err) => write!(f, "invalid UTF-8 string in IPNS record: {}", err),
-        InvalidDateString(err) => write!(f, "invalid date string: {}", err),
+      SigningError(err) => write!(f, "signing error: {}", err),
+      CborEncodingError(err) => write!(f, "cbor errro: {}", err),
+      ProtobufEncodingError(err) => write!(f, "protobuf encoding error: {}", err),
+      ProtobufDecodingError(err) => write!(f, "protobuf decoding error: {}", err),
+      InvalidSignatureV1 => write!(f, "invalid IPNS signature (version 1)"),
+      InvalidSignatureV2 => write!(f, "invalid IPNS signature (version 2)"),
+      SignatureV2DataMismatch => write!(f, "IPNS signature data does not match IPNS record values"),
+      InvalidUtf8(err) => write!(f, "invalid UTF-8 string in IPNS record: {}", err),
+      InvalidDateString(err) => write!(f, "invalid date string: {}", err),
     }
   }
 }
@@ -246,7 +245,7 @@ mod tests {
     let name = WritableName::new();
     let value = "such value. much wow".to_string();
     let validity = Utc::now().checked_add_signed(Duration::weeks(52)).unwrap();
-    let rev = Revision::v0(&name.to_name(), &value, validity);
+    let rev = Revision::v0_with_validity(&name.to_name(), &value, validity);
     assert_eq!(rev.sequence(), 0);
     assert_eq!(rev.name(), &name.to_name());
     assert_eq!(rev.value(), &value);
@@ -262,8 +261,7 @@ mod tests {
   fn round_trip() {
     let name = WritableName::new();
     let value = "such value. much wow".to_string();
-    let validity = Utc::now().checked_add_signed(Duration::weeks(52)).unwrap();
-    let rev = Revision::v0(&name.to_name(), &value, validity);
+    let rev = Revision::v0(&name.to_name(), &value);
 
     let entry = revision_to_ipns_entry(&rev, name.keypair()).unwrap();
 

@@ -98,9 +98,9 @@ impl std::fmt::Display for NameError {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
     use NameError::*;
     match self {
-        InvalidCidString => write!(f, "invalid CID string"),
-        InvalidMulticodec => write!(f, "invalid multicodec value"),
-        InvalidKey => write!(f, "invalid key"),
+      InvalidCidString => write!(f, "invalid CID string"),
+      InvalidMulticodec => write!(f, "invalid multicodec value"),
+      InvalidKey => write!(f, "invalid key"),
     }
   }
 }

@@ -1,5 +1,5 @@
 use crate::name::Name;
-use chrono::{DateTime, SecondsFormat, Utc};
+use chrono::{DateTime, Duration, SecondsFormat, Utc};
 
 #[derive(Debug, Eq, PartialEq)]
 pub struct Revision {
@@ -26,7 +26,15 @@ impl Revision {
     }
   }
 
-  pub fn v0<S: AsRef<str>>(name: &Name, value: S, validity: DateTime<Utc>) -> Revision {
+  pub fn v0<S: AsRef<str>>(name: &Name, value: S) -> Revision {
+    Revision::new(name, value, default_validity(), 0)
+  }
+
+  pub fn v0_with_validity<S: AsRef<str>>(
+    name: &Name,
+    value: S,
+    validity: DateTime<Utc>,
+  ) -> Revision {
     Revision::new(name, value, validity, 0)
   }
 
@@ -36,7 +44,7 @@ impl Revision {
       name: self.name.clone(),
       value: value.as_ref().to_string(),
       sequence,
-      validity: self.validity.clone(),
+      validity: default_validity(),
     }
   }
 
@@ -59,4 +67,8 @@ impl Revision {
   pub fn validity_string(&self) -> String {
     self.validity.to_rfc3339_opts(SecondsFormat::Nanos, true)
   }
+}
+
+fn default_validity() -> DateTime<Utc> {
+  Utc::now().checked_add_signed(Duration::weeks(52)).unwrap()
 }

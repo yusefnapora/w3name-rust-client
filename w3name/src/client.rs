@@ -11,9 +11,7 @@ use crate::{
     deserialize_ipns_entry, revision_from_ipns_entry, revision_to_ipns_entry, serialize_ipns_entry,
     validate_ipns_entry, IpnsError,
   },
-  Name,
-  Revision,
-  WritableName,
+  Name, Revision, WritableName,
 };
 
 const DEFAULT_ENDPOINT: &str = "https://name.web3.storage";
@@ -27,10 +25,12 @@ pub struct W3NameClient {
 
 impl W3NameClient {
   pub fn new(endpoint: Url) -> Self {
+    let http = Client::new();
+    let limiter = RateLimiter::direct(Quota::per_second(nonzero!(RATE_LIMIT_REQUESTS)));
     W3NameClient {
-      endpoint: endpoint,
-      http: Client::new(),
-      limiter: RateLimiter::direct(Quota::per_second(nonzero!(RATE_LIMIT_REQUESTS))),
+      endpoint,
+      http,
+      limiter,
     }
   }
 
@@ -112,10 +112,10 @@ impl std::fmt::Display for ServiceError {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
     use ServiceError::*;
     match self {
-        GenericError(msg) => write!(f, "error: {}", msg),
-        APIError(msg) => write!(f, "api error: {}", msg),
-        RequestError(err) => write!(f, "request error: {}", err),
-        Ipns(err) => write!(f, "ipns error: {}", err),
+      GenericError(msg) => write!(f, "error: {}", msg),
+      APIError(msg) => write!(f, "api error: {}", msg),
+      RequestError(err) => write!(f, "request error: {}", err),
+      Ipns(err) => write!(f, "ipns error: {}", err),
     }
   }
 }
