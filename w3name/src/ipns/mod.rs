@@ -57,8 +57,7 @@ pub fn validate_ipns_entry(entry: &IpnsEntry, public_key: &PublicKey) -> Result<
     let sig = entry.signature_v2();
     let data = entry.data();
     validate_v2_signature(public_key, sig, data)?;
-    // FIXME: currently fails on cbor decoding issue
-    // validate_v2_data_matches_entry_data(entry)?;
+    validate_v2_data_matches_entry_data(entry)?;
 
     return Ok(());
   }
@@ -97,13 +96,7 @@ fn v2_signature_data(
   };
   let encoded = serde_cbor::to_vec(&data)?;
 
-    // debug cruft, rm plz
-    use std::fmt::Write;
-    let mut s = String::new();
-    for &byte in &encoded {
-      write!(&mut s, "{:x}", byte).expect("write error");
-    }
-    println!("cbor data: {}", s);
+
   Ok(encoded)
 }
 
@@ -117,8 +110,6 @@ fn validate_v2_signature(public_key: &PublicKey, sig: &[u8], data: &[u8]) -> Res
   }
 }
 
-// FIXME: this chokes on decoding cbor data from a published record. maybe there's some kind of padding?
-#[allow(dead_code)]
 fn validate_v2_data_matches_entry_data(entry: &IpnsEntry) -> Result<(), IpnsError> {
   if entry.data.is_none() {
     return Err(IpnsError::InvalidSignatureV2);
@@ -235,7 +226,9 @@ impl From<ParseError> for IpnsError {
 #[allow(non_snake_case)]
 #[derive(serde::Serialize, serde::Deserialize)]
 struct SignatureV2Data {
+  #[serde(with = "serde_bytes")]
   Value: Vec<u8>,
+  #[serde(with = "serde_bytes")]
   Validity: Vec<u8>,
   ValidityType: i32,
   Sequence: u64,
