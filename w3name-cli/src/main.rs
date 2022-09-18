@@ -1,7 +1,7 @@
-use std::{error::Error, fs, path::PathBuf, fmt::Display};
+use std::{error::Error, fmt::Display, fs, path::PathBuf};
 
 use clap::{Parser, Subcommand};
-use error_stack::{Result, ResultExt, IntoReport};
+use error_stack::{IntoReport, Result, ResultExt};
 
 use w3name::{Name, Revision, W3NameClient, WritableName};
 
@@ -68,8 +68,14 @@ fn create(output: &Option<PathBuf>) -> Result<(), CliError> {
     .clone()
     .unwrap_or_else(|| PathBuf::from(format!("{}.key", name.to_string())));
 
-  let bytes = name.keypair().to_protobuf_encoding().report().change_context(CliError)?;
-  fs::write(&output, bytes).report().change_context(CliError)?;
+  let bytes = name
+    .keypair()
+    .to_protobuf_encoding()
+    .report()
+    .change_context(CliError)?;
+  fs::write(&output, bytes)
+    .report()
+    .change_context(CliError)?;
   println!("wrote new keypair to {}", output.display());
   Ok(())
 }
@@ -85,7 +91,10 @@ async fn publish(key_file: &PathBuf, value: &str) -> Result<(), CliError> {
     Err(_) => Revision::v0(&writable.to_name(), value),
   };
 
-  client.publish(&writable, &new_revision).await.change_context(CliError)?;
+  client
+    .publish(&writable, &new_revision)
+    .await
+    .change_context(CliError)?;
 
   println!(
     "published new value for key {}: {}",
@@ -94,7 +103,6 @@ async fn publish(key_file: &PathBuf, value: &str) -> Result<(), CliError> {
   );
   Ok(())
 }
-
 
 #[derive(Debug)]
 struct CliError;

@@ -1,9 +1,5 @@
-# w3name-rust-client
-
-> A client library and command line tool for w3name IPNS over HTTP service.
-
-<h1 align="center">⁂<br/>w3name</h1>
-<p align="center">Content addressing for a dynamic web.</p>
+<h1 align="center">⁂<br/>w3name-rust-client</h1>
+<p align="center">Content addressing for a dynamic web. Now available from Rust!</p>
 
 ## About
 
@@ -34,6 +30,30 @@ To create a new name, use `WritableName::new()`, which will generate a new keypa
 You can save this to disk by calling `keypair().to_protobuf_encoding()` on a `WritableName` instance, which will give you a `Vec<u8>` in a format that's acceptable to `WritableName::from_private_key()`. Please keep the key in a safe location, as it will allow the holder to update your published records.
 
 
+### Parsing a `Name` from string
+
+A `Name` is a wrapper around a public key, which when encoded to a string looks something like this:
+
+```
+k51qzi5uqu5dka3tmn6ipgsrq1u2bkuowdwlqcw0vibledypt1y9y5i8v8xwvu
+```
+
+This string is a Content Identifier (CID) with the bytes of the public key embedded within it.
+
+You can convert the string representation to a `Name` struct by calling `Name::parse`.
+
+
+### Using the `W3NameClient` to publish and resolve names
+
+The `W3NameClient` struct provides a [reqwest](https://docs.rs/reqwest/latest/reqwest/)-based HTTP client for interacting with the w3name service. As it uses the `async` reqwest implementation, you'll need a [tokio](https://tokio.rs/) runtime in order to use it.
+
+See [w3name-cli/src/main.rs](./w3name-cli/src/main.rs) for an example of using the client to publish and resolve names.
+
+<!-- TODO: add publish and resolve examples here -->
+
+## Using the `w3name-cli` command-line tool
+
+Instructions coming soon! In the meantime, try `w3name-cli help` to get a feel for what's there.
 
 
 [w3name]: https://github.com/web3-storage/w3name
