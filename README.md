@@ -63,7 +63,7 @@ See [w3name-cli/src/main.rs](./w3name-cli/src/main.rs) for an example of using t
 
 ## Using the `w3name` command-line tool
 
-Instructions coming soon! In the meantime, try `w3name-cli help` to get a feel for what's there.
+Instructions coming soon! In the meantime, try `w3name help` to get a feel for what's there.
 
 
 [w3name]: https://github.com/web3-storage/w3name
