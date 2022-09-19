@@ -17,17 +17,32 @@ This project is quite new, and there may be breaking API changes as things are d
 
 ## Install
 
+### Native dependencies
+
 To install with `cargo`, you'll need the [Protocol Buffers compiler](https://grpc.io/docs/protoc-installation/), and the `protoc` command must be on your `$PATH`. Version `3.20.2` is known to work, and other 3.x versions are likely to work as well.
 
 You'll also need `perl`, since we build openssl from source, and `perl` is required by the build process.
 
-Until this gets published on crates.io, you can install from git using:
+### Add `w3name` client library as a dependency
 
-```sh
-cargo install --git https://github.com/yusefnapora/w3name-rust-client
+If you're building a rust project, you can add the `w3name` crate to your `Cargo.toml`:
+
+```toml
+[dependencies]
+w3name = "0.1.0"
 ```
 
-### Binary releases
+### Install the `w3name` command-line tool with `cargo`
+
+You can install the CLI tool with `cargo install`:
+
+```sh
+cargo install w3name-cli
+```
+
+This should make the `w3name` command available on your `$PATH`.
+
+### Binary CLI releases
 
 To download a pre-compiled binary of the `w3name` command-line tool, grab the `.tar.gz` file for your platform from the [latest release](https://github.com/yusefnapora/w3name-rust-client/releases).
 
