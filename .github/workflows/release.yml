@@ -1,0 +1,83 @@
+# Build w3name binaries for each platform and upload to Github release
+# Runs when a release is created
+
+on:
+  release:
+    types: [created]
+
+name: Release binaries
+
+jobs:
+  generate:
+    name: Release ${{ matrix.target }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+          - x86_64-unknown-linux-gnu
+          - x86_64-pc-windows-gnu
+          - aarch64-unknown-linux-gnu
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          target: ${{ matrix.target }}
+          override: true
+      - uses: actions-rs/cargo@v1
+        with:
+          use-cross: true
+          command: build
+          args: --release --target ${{ matrix.target }}
+      - name: Create tarball
+        uses: a7ul/tar-action@v1.1.0
+        id: tarball
+        with:
+          command: c
+          cwd: ./target/${{ matrix.target }}/release
+          files: [./w3name]
+          outPath: $GITHUB_WORKSPACE/w3name-${{ matrix.target }}.tar.gz
+      - name: Upload binary
+        uses: skx/github-action-publish-binaries@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          args: $GITHUB_WORKSPACE/w3name-${{ matrix.target }}.tar.gz
+
+  build_macos:
+    name: Release for ${{ matrix.target }}
+    runs-on: macos-11
+    strategy:
+      matrix:
+        target:
+          - x86_64-apple-darwin
+          - aarch64-apple-darwin
+    steps:
+      - name: install protobuf compiler
+        run: brew install protobuf
+      - uses: actions/checkout@v3
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          target: ${{ matrix.target }}
+          override: true
+      - name: Cargo build
+        run: cargo build --release --target ${{ matrix.target }}
+      - name: Create tarball
+        uses: a7ul/tar-action@v1.1.0
+        id: tarball
+        with:
+          command: c
+          cwd: ./target/${{ matrix.target }}/release
+          files: [./w3name]
+          outPath: $GITHUB_WORKSPACE/w3name-${{ matrix.target }}.tar.gz
+      - name: Upload binary
+        uses: skx/github-action-publish-binaries@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          args: $GITHUB_WORKSPACE/w3name-${{ matrix.target }}.tar.gz
+
+
+
