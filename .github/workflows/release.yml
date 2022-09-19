@@ -29,6 +29,7 @@ jobs:
             tarball: w3name-windows-x86_64.tar.gz
             exe_suffix: ".exe"
     steps:
+      - run: sudo apt-get install -y jq
       - uses: actions/checkout@v3
       - uses: actions-rs/toolchain@v1
         with:
@@ -50,11 +51,9 @@ jobs:
             ./w3name${{ matrix.exe_suffix }}
           outPath: ${{ github.workspace }}/${{ matrix.tarball }}
       - name: Upload binary
-        uses: skx/github-action-publish-binaries@master
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          args: ${{ github.workspace }}/${{ matrix.tarball }}
+        run: .github/upload-release.sh ${{ github.workspace }}/${{ matrix.tarball }}
 
   # build_macos:
   #   name: Release for ${{ matrix.target }}
