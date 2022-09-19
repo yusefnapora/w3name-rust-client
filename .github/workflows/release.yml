@@ -71,7 +71,8 @@ jobs:
         with:
           command: c
           cwd: ./target/${{ matrix.target }}/release
-          files: [./w3name]
+          files: |
+            ./w3name
           outPath: $GITHUB_WORKSPACE/w3name-${{ matrix.target }}.tar.gz
       - name: Upload binary
         uses: skx/github-action-publish-binaries@master
