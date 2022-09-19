@@ -5,9 +5,6 @@ on: [push]
 
 name: Cargo build
 
-env:
-  PROTOC: /opt/protobuf/bin/protoc
-
 jobs:
   build_linux_and_windows:
     name: Build for Linux & Windows 
