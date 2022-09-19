@@ -6,7 +6,7 @@ use error_stack::{IntoReport, Result, ResultExt};
 use w3name::{Name, Revision, W3NameClient, WritableName};
 
 #[derive(Parser)]
-#[clap(version, about, long_about = None)]
+#[clap(name = "w3name", version, about, long_about = None)]
 struct Cli {
   #[clap(subcommand)]
   command: Commands,

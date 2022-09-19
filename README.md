@@ -61,7 +61,7 @@ See [w3name-cli/src/main.rs](./w3name-cli/src/main.rs) for an example of using t
 
 <!-- TODO: add publish and resolve examples here -->
 
-## Using the `w3name-cli` command-line tool
+## Using the `w3name` command-line tool
 
 Instructions coming soon! In the meantime, try `w3name-cli help` to get a feel for what's there.
 
