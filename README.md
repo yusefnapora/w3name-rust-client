@@ -31,6 +31,19 @@ cargo install --git https://github.com/yusefnapora/w3name-rust-client
 
 To download a pre-compiled binary of the `w3name` command-line tool, grab the `.tar.gz` file for your platform from the [latest release](https://github.com/yusefnapora/w3name-rust-client/releases).
 
+### Nix
+
+If you use the [Nix package manager](https://nixos.org/), you can start a new shell with the `w3name` command line tool installed:
+
+```sh
+nix shell github:yusefnapora/w3name-rust-client
+```
+
+The above assumes that you're using Nix flakes. If not, you can clone this repository and build a "legacy" package with:
+
+```sh
+nix-build . -A defaultPackage.x86_64-linux # or aarch64-linux, etc
+```
 
 ## Using the `w3name` client library
 
