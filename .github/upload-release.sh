@@ -20,7 +20,7 @@ fi
 
 # Only upload to non-draft releases
 IS_DRAFT=$(jq --raw-output '.release.draft' $GITHUB_EVENT_PATH)
-if [ "$IS_DRAFT" = true ]; then
+if [ "$IS_DRAFT" = "true" ]; then
   echo "This is a draft, so nothing to do!"
   exit 0
 fi
@@ -34,7 +34,7 @@ else
   CONTENT_TYPE_HEADER="Content-Type: application/gzip"
 fi
 
-# Request the upload url
+# Construct the upload url
 RELEASE_ID=$(jq --raw-output '.release.id' $GITHUB_EVENT_PATH)
 if [[ -z "${RELEASE_ID}" ]]; then
   echo "There was no release ID in the GitHub event. Are you using the release event type?"
@@ -51,7 +51,7 @@ curl \
   -f \
   -sSL \
   -XPOST \
-  -H "Accept: application/vnd.github+json"
+  -H "Accept: application/vnd.github+json" \
   -H "${AUTH_HEADER}" \
   -H "${CONTENT_TYPE_HEADER}" \
   --data-binary "@${1}" \
