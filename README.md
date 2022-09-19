@@ -17,6 +17,12 @@ This project is quite new, and there may be breaking API changes as things are d
 
 ## Install
 
+### Binary releases
+
+To download a pre-compiled binary of the `w3name` command-line tool, grab the `.tar.gz` file for your platform from the [latest release](https://github.com/yusefnapora/w3name-rust-client/releases).
+
+
+
 Until this gets published on crates.io, you can install from git using:
 
 ```sh
