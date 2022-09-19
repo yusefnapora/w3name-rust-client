@@ -1,0 +1,2 @@
+[build.env]
+volumes = ["/usr/bin/protoc:/usr/bin/protoc:ro"]
