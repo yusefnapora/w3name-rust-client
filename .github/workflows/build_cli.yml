@@ -6,7 +6,7 @@ on: [push]
 name: Cargo build
 
 env:
-  PROTOC: /usr/bin/protoc
+  PROTOC: /opt/protobuf/bin/protoc
 
 jobs:
   build_and_test:
