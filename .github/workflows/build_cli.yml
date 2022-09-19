@@ -1,4 +1,4 @@
-# build w3name-cli binaries for mac, linux & windows
+# build w3name-cli binaries for linux & windows
 # TODO: trigger on github release action and upload binaries as release artifacts
 
 on: [push]
@@ -9,17 +9,15 @@ env:
   PROTOC: /opt/protobuf/bin/protoc
 
 jobs:
-  build_and_test:
-    name: Build w3name-cli 
+  build_linux_and_windows:
+    name: Build for Linux & Windows 
     runs-on: ubuntu-latest
     strategy:
       matrix:
         target:
           - x86_64-unknown-linux-gnu
           - x86_64-pc-windows-gnu
-          # - x86_64-apple-darwin
           - aarch64-unknown-linux-gnu
-          # - aarch64-apple-darwin
     steps:
       - uses: actions/checkout@v3
       - uses: actions-rs/toolchain@v1
@@ -32,5 +30,28 @@ jobs:
           use-cross: true
           command: build
           args: --release --target ${{ matrix.target }}
+
+  build_macos:
+    name: Build for macOS
+    runs-on: macos-11
+    strategy:
+      matrix:
+        target:
+          - x86_64-apple-darwin
+          - aarch64-apple-darwin
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          target: ${{ matrix.target }}
+          override: true
+      - name: Cargo build
+        run: >
+        SDKROOT=$(xcrun -sdk macosx11.1 --show-sdk-path) 
+        MACOSX_DEPLOYMENT_TARGET=$(xcrun -sdk macosx11.1 --show-sdk-platform-version) 
+        cargo build --target=${{ matrix.target }}
+        
+
 
 
