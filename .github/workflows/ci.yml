@@ -1,0 +1,24 @@
+# build and run cargo test
+
+on: [push]
+
+name: CI
+
+jobs:
+  build_and_test:
+    name: Build & Test 
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+      - name: Cargo test
+        uses: actions-rs/cargo@v1
+        with:
+          command: test
+      - name: Cargo build
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --release --target ${{ matrix.target }}
