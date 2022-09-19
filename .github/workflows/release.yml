@@ -49,10 +49,11 @@ jobs:
             ./w3name${{ matrix.exe_suffix }}
           outPath: ${{ github.workspace }}/w3name-${{ matrix.arch }}.tar.gz
       - name: Upload binary
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: .github/upload-release.sh ${{ github.workspace }}/w3name-${{ matrix.arch }}.tar.gz
-
+        uses: shogo82148/actions-upload-release-asset@v1
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: ${{ github.workspace}}/w3name-${{ matrix.arch }}.tar.gz
+          
   # macos:
   #   name: Release for ${{ matrix.arch }}
   #   runs-on: macos-11
