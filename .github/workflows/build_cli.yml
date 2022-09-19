@@ -47,10 +47,7 @@ jobs:
           target: ${{ matrix.target }}
           override: true
       - name: Cargo build
-        run: >
-        SDKROOT=$(xcrun -sdk macosx11.1 --show-sdk-path) 
-        MACOSX_DEPLOYMENT_TARGET=$(xcrun -sdk macosx11.1 --show-sdk-platform-version) 
-        cargo build --target=${{ matrix.target }}
+        run: RUST_BUILD_TARGET=${{ matrix.target }} ./build-macos.sh 
         
 
 
