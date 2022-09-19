@@ -38,13 +38,13 @@ jobs:
           cwd: ./target/${{ matrix.target }}/release
           files: |
             ./w3name
-          outPath: $GITHUB_WORKSPACE/w3name-${{ matrix.target }}.tar.gz
+          outPath: ${{ github.workspace }}/w3name-${{ matrix.target }}.tar.gz
       - name: Upload binary
         uses: skx/github-action-publish-binaries@master
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          args: $GITHUB_WORKSPACE/w3name-${{ matrix.target }}.tar.gz
+          args: ${{ github.workspace }}/w3name-${{ matrix.target }}.tar.gz
 
   build_macos:
     name: Release for ${{ matrix.target }}
@@ -73,13 +73,13 @@ jobs:
           cwd: ./target/${{ matrix.target }}/release
           files: |
             ./w3name
-          outPath: $GITHUB_WORKSPACE/w3name-${{ matrix.target }}.tar.gz
+          outPath: ${{ github.workspace }}/w3name-${{ matrix.target }}.tar.gz
       - name: Upload binary
         uses: skx/github-action-publish-binaries@master
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          args: $GITHUB_WORKSPACE/w3name-${{ matrix.target }}.tar.gz
+          args: ${{ github.workspace }}/w3name-${{ matrix.target }}.tar.gz
 
 
 
