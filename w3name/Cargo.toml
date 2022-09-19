@@ -3,8 +3,6 @@ name = "w3name"
 version = "0.1.0"
 edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
 
 libp2p-core = "0.36.0"
@@ -23,7 +21,7 @@ error-stack = "0.1.1"
 # lets us cross-compile for aarch64 on an x86_64 host.
 # many thanks to the author of this post: https://obviy.us/blog/2022/cross-compiling-rust-on-gha/
 #
-# note that this seems to break the nix / naersk build, so we should probably put it behind a flag
+# note that this apparently requires perl to be installed to build openssl
 openssl = { version = "0.10", features = ["vendored"] }
 
 # TODO: put these behind a feature flag? They're only needed for the client

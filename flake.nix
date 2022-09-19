@@ -11,14 +11,16 @@
         pkgs = import nixpkgs { inherit system; };
         naersk-lib = pkgs.callPackage naersk { };
 
-        # native deps needed to build libp2p-core
-        native-deps = with pkgs; [ pkg-config openssl.dev protobuf ];
+        # native deps needed to build openssl and compile protobufs
+        native-deps = with pkgs; [ protobuf perl ];
       in
       {
         defaultPackage = naersk-lib.buildPackage {
           src = ./.;
 
           nativeBuildInputs = native-deps;
+
+          cargoBuildOptions = opts: opts ++ ["--no-default-features"];
         };
 
         defaultApp = utils.lib.mkApp {
