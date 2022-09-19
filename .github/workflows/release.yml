@@ -9,14 +9,14 @@ name: Release binaries
 
 jobs:
   generate:
-    name: Release ${{ matrix.target }}
+    name: Release ${{ matrix.arch }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
         include:
           - target: x86_64-unknown-linux-gnu
-            tarball: w3name-linux-x86_64.tar.gz
+            arch: linux-x86_64
             exe_suffix: ""
           # - target: aarch64-unknown-linux-gnu
           #   tarball: w3name-linux-aarch64.tar.gz
@@ -25,7 +25,6 @@ jobs:
           #   tarball: w3name-windows-x86_64.tar.gz
           #   exe_suffix: ".exe"
     steps:
-      - run: sudo apt-get install -y jq
       - uses: actions/checkout@v3
       - uses: actions-rs/toolchain@v1
         with:
@@ -45,25 +44,22 @@ jobs:
           cwd: ./target/${{ matrix.target }}/release
           files: |
             ./w3name${{ matrix.exe_suffix }}
-          outPath: ${{ github.workspace }}/${{ matrix.tarball }}
+          outPath: ${{ github.workspace }}/w3name-${{ matrix.arch }}.tar.gz
       - name: Upload binary
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: .github/upload-release.sh ${{ github.workspace }}/${{ matrix.tarball }}
+        run: .github/upload-release.sh ${{ github.workspace }}/w3name-${{ matrix.arch }}.tar.gz
 
   # build_macos:
-  #   name: Release for ${{ matrix.target }}
+  #   name: Release for ${{ matrix.arch }}
   #   runs-on: macos-11
   #   strategy:
   #     matrix:
-  #       target:
-  #         - x86_64-apple-darwin
-  #         - aarch64-apple-darwin
   #       include:
   #         - target: x86_64-apple-darwin
-  #           tarball: w3name-macos-x86_64.tar.gz
+  #           arch: macos-x86_64
   #         - target: aarch64-apple-darwin
-  #           tarball: w3name-macos-aarch64.tar.gz
+  #           arch: macos-aarch64
   #   steps:
   #     - name: install protobuf compiler
   #       run: brew install protobuf
@@ -85,11 +81,11 @@ jobs:
   #         cwd: ./target/${{ matrix.target }}/release
   #         files: |
   #           ./w3name
-  #         outPath: ${{ github.workspace }}/${{ matrix.tarball }}
+  #         outPath: ${{ github.workspace }}/w3name-${{ matrix.arch }}.tar.gz
   #     - name: Upload binary
   #       env:
   #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  #       run: .github/upload-release.sh ${{ github.workspace }}/${{ matrix.tarball }}
+  #       run: .github/upload-release.sh ${{ github.workspace }}/w3name-${{ matrix.arch }}.tar.gz
 
 
 

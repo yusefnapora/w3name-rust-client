@@ -27,12 +27,11 @@ fi
 
 # Prepare the headers
 AUTH_HEADER="Authorization: Bearer ${GITHUB_TOKEN}"
-CONTENT_LENGTH_HEADER="Content-Length: $(stat -c%s "${1}")"
 
 if [[ -z "$2" ]]; then
   CONTENT_TYPE_HEADER="Content-Type: ${2}"
 else
-  CONTENT_TYPE_HEADER="Content-Type: application/zip"
+  CONTENT_TYPE_HEADER="Content-Type: application/gzip"
 fi
 
 # Request the upload url
@@ -42,11 +41,8 @@ if [[ -z "${RELEASE_ID}" ]]; then
   exit 1
 fi
 
-GET_RELEASE_URL="https://api.github.com/repos/${GITHUB_REPOSITORY}/releases/${RELEASE_ID}"
-RELEASE_JSON=$(curl -H "Accept: application/vnd.github+json" -H "Authorization: Bearer ${GITHUB_TOKEN}" ${GET_RELEASE_URL})
-
 FILENAME=$(basename $1)
-UPLOAD_URL=$(echo ${RELEASE_JSON} | jq --raw-output '.upload_url')
+UPLOAD_URL="https://uploads.github.com/repos/${GITHUB_REPOSITORY}/releases/${RELEASE_ID}/assets?name=${FILENAME}"
 
 echo "$UPLOAD_URL"
 
@@ -57,7 +53,6 @@ curl \
   -XPOST \
   -H "Accept: application/vnd.github+json"
   -H "${AUTH_HEADER}" \
-  -H "${CONTENT_LENGTH_HEADER}" \
   -H "${CONTENT_TYPE_HEADER}" \
-  --upload-file "${1}" \
+  --data-binary "@${1}" \
   "${UPLOAD_URL}"
