@@ -47,7 +47,7 @@ jobs:
           target: ${{ matrix.target }}
           override: true
       - name: Cargo build
-        run: RUST_BUILD_TARGET=${{ matrix.target }} ./build-macos.sh 
+        run: cargo build --target ${{ matrix.target }}
         
 
 
