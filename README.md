@@ -15,6 +15,16 @@ For more about w3name in general, see the [main github repository][w3name].
 
 This project is quite new, and there may be breaking API changes as things are developed. If you notice that the description below has drifted from the published API, please open an issue so we can update the docs!
 
+## Install
+
+Until this gets published on crates.io, you can install from git using:
+
+```sh
+cargo install --git https://github.com/yusefnapora/w3name-rust-client
+```
+
+Precompiled binaries coming soon!
+
 ## Using the `w3name` client library
 
 There are two main types that represent "names":
