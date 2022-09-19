@@ -35,15 +35,19 @@ else
   CONTENT_TYPE_HEADER="Content-Type: application/zip"
 fi
 
-# Build the Upload URL from the various pieces
+# Request the upload url
 RELEASE_ID=$(jq --raw-output '.release.id' $GITHUB_EVENT_PATH)
 if [[ -z "${RELEASE_ID}" ]]; then
   echo "There was no release ID in the GitHub event. Are you using the release event type?"
   exit 1
 fi
 
+GET_RELEASE_URL="https://api.github.com/repos/${GITHUB_REPOSITORY}/releases/${RELEASE_ID}"
+RELEASE_JSON=$(curl -H "Accept: application/vnd.github+json" -H "Authorization: Bearer ${GITHUB_TOKEN}" ${GET_RELEASE_URL})
+
 FILENAME=$(basename $1)
-UPLOAD_URL="https://uploads.github.com/repos/${GITHUB_REPOSITORY}/releases/${RELEASE_ID}/assets?name=${FILENAME}"
+UPLOAD_URL=$(echo ${RELEASE_JSON} | jq --raw-output '.upload_url')
+
 echo "$UPLOAD_URL"
 
 # Upload the file
@@ -51,6 +55,7 @@ curl \
   -f \
   -sSL \
   -XPOST \
+  -H "Accept: application/vnd.github+json"
   -H "${AUTH_HEADER}" \
   -H "${CONTENT_LENGTH_HEADER}" \
   -H "${CONTENT_TYPE_HEADER}" \

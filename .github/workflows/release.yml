@@ -16,8 +16,8 @@ jobs:
       matrix:
         target:
           - x86_64-unknown-linux-gnu
-          - aarch64-unknown-linux-gnu
-          - x86_64-pc-windows-gnu
+          # - aarch64-unknown-linux-gnu
+          # - x86_64-pc-windows-gnu
         include:
           - target: x86_64-unknown-linux-gnu
             tarball: w3name-linux-x86_64.tar.gz
@@ -55,45 +55,45 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: .github/upload-release.sh ${{ github.workspace }}/${{ matrix.tarball }}
 
-  build_macos:
-    name: Release for ${{ matrix.target }}
-    runs-on: macos-11
-    strategy:
-      matrix:
-        target:
-          - x86_64-apple-darwin
-          - aarch64-apple-darwin
-        include:
-          - target: x86_64-apple-darwin
-            tarball: w3name-macos-x86_64.tar.gz
-          - target: aarch64-apple-darwin
-            tarball: w3name-macos-aarch64.tar.gz
-    steps:
-      - name: install protobuf compiler
-        run: brew install protobuf
-      - name: install jq
-        run: brew install jq
-      - uses: actions/checkout@v3
-      - uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          target: ${{ matrix.target }}
-          override: true
-      - name: Cargo build
-        run: cargo build --release --target ${{ matrix.target }}
-      - name: Create tarball
-        uses: a7ul/tar-action@v1.1.0
-        id: tarball
-        with:
-          command: c
-          cwd: ./target/${{ matrix.target }}/release
-          files: |
-            ./w3name
-          outPath: ${{ github.workspace }}/${{ matrix.tarball }}
-      - name: Upload binary
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: .github/upload-release.sh ${{ github.workspace }}/${{ matrix.tarball }}
+  # build_macos:
+  #   name: Release for ${{ matrix.target }}
+  #   runs-on: macos-11
+  #   strategy:
+  #     matrix:
+  #       target:
+  #         - x86_64-apple-darwin
+  #         - aarch64-apple-darwin
+  #       include:
+  #         - target: x86_64-apple-darwin
+  #           tarball: w3name-macos-x86_64.tar.gz
+  #         - target: aarch64-apple-darwin
+  #           tarball: w3name-macos-aarch64.tar.gz
+  #   steps:
+  #     - name: install protobuf compiler
+  #       run: brew install protobuf
+  #     - name: install jq
+  #       run: brew install jq
+  #     - uses: actions/checkout@v3
+  #     - uses: actions-rs/toolchain@v1
+  #       with:
+  #         toolchain: stable
+  #         target: ${{ matrix.target }}
+  #         override: true
+  #     - name: Cargo build
+  #       run: cargo build --release --target ${{ matrix.target }}
+  #     - name: Create tarball
+  #       uses: a7ul/tar-action@v1.1.0
+  #       id: tarball
+  #       with:
+  #         command: c
+  #         cwd: ./target/${{ matrix.target }}/release
+  #         files: |
+  #           ./w3name
+  #         outPath: ${{ github.workspace }}/${{ matrix.tarball }}
+  #     - name: Upload binary
+  #       env:
+  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  #       run: .github/upload-release.sh ${{ github.workspace }}/${{ matrix.tarball }}
 
 
 
