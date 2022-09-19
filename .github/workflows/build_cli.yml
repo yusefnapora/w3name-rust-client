@@ -5,6 +5,9 @@ on: [push]
 
 name: Cargo build
 
+env:
+  PROTOC: /usr/bin/protoc
+
 jobs:
   build_and_test:
     name: Build w3name-cli 

@@ -21,6 +21,7 @@ error-stack = "0.1.1"
 
 # we depend indirectly on openssl, but adding an explicit dep with the "vendored" feature
 # lets us cross-compile for aarch64 on an x86_64 host.
+# many thanks to the author of this post: https://obviy.us/blog/2022/cross-compiling-rust-on-gha/
 openssl = { version = "0.10", features = ["vendored"] }
 
 # TODO: put these behind a feature flag? They're only needed for the client
