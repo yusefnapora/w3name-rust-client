@@ -46,6 +46,9 @@ UPLOAD_URL="https://uploads.github.com/repos/${GITHUB_REPOSITORY}/releases/${REL
 
 echo "$UPLOAD_URL"
 
+echo "uploading file:"
+ls -lh $1
+
 # Upload the file
 curl \
   -f \
