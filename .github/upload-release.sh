@@ -26,7 +26,7 @@ if [ "$IS_DRAFT" = true ]; then
 fi
 
 # Prepare the headers
-AUTH_HEADER="Authorization: token ${GITHUB_TOKEN}"
+AUTH_HEADER="Authorization: Bearer ${GITHUB_TOKEN}"
 CONTENT_LENGTH_HEADER="Content-Length: $(stat -c%s "${1}")"
 
 if [[ -z "$2" ]]; then
