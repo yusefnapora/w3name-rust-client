@@ -10,4 +10,3 @@ curl -LO $PB_REL/download/v$PROTOC_VERSION/$ZIPFILE
 
 mkdir -p /opt/protobuf
 unzip $ZIPFILE -d /opt/protobuf
- 
