@@ -21,11 +21,8 @@ jobs:
           - target: aarch64-unknown-linux-gnu
             arch: linux-aarch64
             exe_suffix: ""
-          - target: x86_64-pc-windows-msvc
+          - target: x86_64-pc-windows-gnu
             arch: windows-x86_64
-            exe_suffix: ".exe"
-          - target: aarch64-pc-windows-msvc
-            arch: windows-aarch64
             exe_suffix: ".exe"
     steps:
       - uses: actions/checkout@v3
