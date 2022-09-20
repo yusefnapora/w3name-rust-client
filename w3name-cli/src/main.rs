@@ -35,9 +35,8 @@ enum Commands {
 
   /// Create a new public/private keypair and save it to disk.
   Create {
-
     /// Filename to write the key to.
-    /// 
+    ///
     /// If not given, will write to a file named `<name>.key`,
     /// where `<name>` is the string form of the public key.
     #[clap(short, long, value_parser)]
@@ -95,7 +94,7 @@ fn create(output: &Option<PathBuf>) -> Result<(), CliError> {
 async fn publish(key_file: &PathBuf, value: &str) -> Result<(), CliError> {
   let client = W3NameClient::default();
   let key_bytes = fs::read(key_file).report().change_context(CliError)?;
-  let writable = WritableName::from_private_key(&key_bytes).change_context(CliError)?;
+  let writable = WritableName::decode(&key_bytes).change_context(CliError)?;
 
   // to avoid having to keep old revisions around, we first try to resolve and increment any existing records
   let new_revision = match client.resolve(&writable.to_name()).await {

@@ -64,7 +64,8 @@ pub fn deserialize_ipns_entry(entry_bytes: &[u8]) -> Result<IpnsEntry, IpnsError
 
 pub fn validate_ipns_entry(entry: &IpnsEntry, public_key: &PublicKey) -> Result<(), IpnsError> {
   if !entry.signature_v2.is_empty() && !entry.data.is_empty() {
-    validate_v2_signature(public_key, &entry.signature_v2, &entry.data).change_context(IpnsError)?;
+    validate_v2_signature(public_key, &entry.signature_v2, &entry.data)
+      .change_context(IpnsError)?;
     validate_v2_data_matches_entry_data(entry).change_context(IpnsError)?;
 
     return Ok(());
@@ -74,9 +75,7 @@ pub fn validate_ipns_entry(entry: &IpnsEntry, public_key: &PublicKey) -> Result<
 }
 
 pub fn revision_from_ipns_entry(entry: &IpnsEntry, name: &Name) -> Result<Revision, IpnsError> {
-  let value = from_utf8(&entry.value)
-    .report()
-    .change_context(IpnsError)?;
+  let value = from_utf8(&entry.value).report().change_context(IpnsError)?;
   let validity_str = from_utf8(&entry.validity)
     .report()
     .change_context(IpnsError)?;
