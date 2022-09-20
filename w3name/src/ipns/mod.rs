@@ -33,16 +33,16 @@ pub fn revision_to_ipns_entry(
   .change_context(IpnsError)?;
   let signature_v2 = create_v2_signature(&signer, &data).change_context(IpnsError)?;
   let entry = IpnsEntry {
-    value: Some(value),
-    validity: Some(validity),
-    sequence: Some(revision.sequence()),
-    validity_type: Some(0),
+    value,
+    validity,
+    sequence: revision.sequence(),
+    validity_type: 0,
 
-    pub_key: None,
-    signature: Some(signature),
-    ttl: Some(ttl),
-    signature_v2: Some(signature_v2),
-    data: Some(data),
+    pub_key: vec![],
+    signature,
+    ttl,
+    signature_v2,
+    data,
   };
 
   Ok(entry)
@@ -63,10 +63,8 @@ pub fn deserialize_ipns_entry(entry_bytes: &[u8]) -> Result<IpnsEntry, IpnsError
 }
 
 pub fn validate_ipns_entry(entry: &IpnsEntry, public_key: &PublicKey) -> Result<(), IpnsError> {
-  if entry.signature_v2.is_some() && entry.data.is_some() {
-    let sig = entry.signature_v2();
-    let data = entry.data();
-    validate_v2_signature(public_key, sig, data).change_context(IpnsError)?;
+  if !entry.signature_v2.is_empty() && !entry.data.is_empty() {
+    validate_v2_signature(public_key, &entry.signature_v2, &entry.data).change_context(IpnsError)?;
     validate_v2_data_matches_entry_data(entry).change_context(IpnsError)?;
 
     return Ok(());
@@ -76,17 +74,17 @@ pub fn validate_ipns_entry(entry: &IpnsEntry, public_key: &PublicKey) -> Result<
 }
 
 pub fn revision_from_ipns_entry(entry: &IpnsEntry, name: &Name) -> Result<Revision, IpnsError> {
-  let value = from_utf8(entry.value())
+  let value = from_utf8(&entry.value)
     .report()
     .change_context(IpnsError)?;
-  let validity_str = from_utf8(entry.validity())
+  let validity_str = from_utf8(&entry.validity)
     .report()
     .change_context(IpnsError)?;
   let validity = DateTime::parse_from_rfc3339(validity_str)
     .report()
     .change_context(IpnsError)?;
 
-  let rev = Revision::new(name, value, validity.into(), entry.sequence());
+  let rev = Revision::new(name, value, validity.into(), entry.sequence);
   Ok(rev)
 }
 
@@ -134,18 +132,18 @@ fn validate_v2_signature(
 fn validate_v2_data_matches_entry_data(
   entry: &IpnsEntry,
 ) -> Result<(), InvalidIpnsV2SignatureData> {
-  if entry.data.is_none() {
+  if entry.data.is_empty() {
     return Err(report!(InvalidIpnsV2SignatureData));
   }
 
-  let data: SignatureV2Data = serde_cbor::from_slice(entry.data())
+  let data: SignatureV2Data = serde_cbor::from_slice(&entry.data[..])
     .report()
     .change_context(InvalidIpnsV2SignatureData)?;
-  if entry.value() != &data.Value
-    || entry.validity() != &data.Validity
-    || entry.sequence() != data.Sequence
-    || entry.ttl() != data.TTL
-    || entry.validity_type != Some(data.ValidityType)
+  if entry.value != data.Value
+    || entry.validity != data.Validity
+    || entry.sequence != data.Sequence
+    || entry.ttl != data.TTL
+    || entry.validity_type != data.ValidityType
   {
     Err(report!(InvalidIpnsV2SignatureData))
   } else {
@@ -157,9 +155,8 @@ fn validate_v1_signature(
   entry: &IpnsEntry,
   public_key: &PublicKey,
 ) -> Result<(), InvalidIpnsV1Signature> {
-  let data = v1_signature_data(entry.value(), entry.validity());
-  let sig = entry.signature();
-  if public_key.verify(&data, sig) {
+  let data = v1_signature_data(&entry.value, &entry.validity);
+  if public_key.verify(&data, &entry.signature) {
     Ok(())
   } else {
     Err(report!(InvalidIpnsV1Signature))
@@ -213,9 +210,9 @@ mod tests {
     assert_eq!(rev.validity(), &validity);
 
     let entry = revision_to_ipns_entry(&rev, name.keypair()).unwrap();
-    assert_eq!(rev.sequence(), entry.sequence());
-    assert_eq!(rev.value().as_bytes(), entry.value());
-    assert_eq!(rev.validity_string().as_bytes(), entry.validity());
+    assert_eq!(rev.sequence(), entry.sequence);
+    assert_eq!(rev.value().as_bytes(), &entry.value);
+    assert_eq!(rev.validity_string().as_bytes(), &entry.validity);
   }
 
   #[test]
