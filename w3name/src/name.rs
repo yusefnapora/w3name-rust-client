@@ -3,11 +3,10 @@ use std::fmt::Display;
 use cid::Cid;
 use libp2p_core::identity::{Keypair, PublicKey};
 use multibase::Base;
-use multihash::derive::Multihash;
+use crate::hash::Hasher;
 use multihash::MultihashDigest;
 
-// we need to rename Result here, because the multihash derive macro gets confused otherwise
-use error_stack::{report, IntoReport, Result as ResultStack, ResultExt};
+use error_stack::{report, IntoReport, Result, ResultExt};
 
 use crate::error::{InvalidCidString, InvalidMulticodecCode, NameError};
 
@@ -41,7 +40,7 @@ impl Name {
   /// let invalid_name_str = "not a valid public key string";
   /// assert!(Name::parse(invalid_name_str).is_err());
   /// ```
-  pub fn parse<S: AsRef<str>>(s: S) -> ResultStack<Name, NameError> {
+  pub fn parse<S: AsRef<str>>(s: S) -> Result<Name, NameError> {
     let res = Cid::try_from(s.as_ref());
     let c = res
       .map_err(|_| InvalidCidString)
@@ -154,7 +153,7 @@ impl WritableName {
     WritableName(kp)
   }
 
-  pub fn from_private_key(key_bytes: &[u8]) -> ResultStack<WritableName, NameError> {
+  pub fn from_private_key(key_bytes: &[u8]) -> Result<WritableName, NameError> {
     let mut kb = key_bytes.to_vec(); // from_protobuf_encoding takes &mut, so clone instead of requiring the same
     let kp = Keypair::from_protobuf_encoding(&mut kb)
       .report()
@@ -189,12 +188,7 @@ impl Display for WritableName {
   }
 }
 
-#[derive(Clone, Copy, Debug, Eq, Multihash, PartialEq)]
-#[mh(alloc_size = 64)]
-enum Hasher {
-  #[mh(code = 0x0, hasher = multihash::IdentityHasher::<64>)]
-  Identity,
-}
+
 
 #[cfg(test)]
 mod tests {
