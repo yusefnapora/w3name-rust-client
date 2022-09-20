@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use cid::Cid;
 use libp2p_core::identity::{Keypair, PublicKey};
 use multibase::Base;
@@ -11,9 +13,9 @@ use crate::error::{InvalidCidString, InvalidMulticodecCode, NameError};
 
 const LIBP2P_MULTICODEC: u64 = 0x72;
 
-/// Name is an IPNS key ID.
+/// `Name` is a representation of an IPNS name identifier, which is also a public verification key.
 ///
-/// Names can be used to retrieve the latest published value from the W3name service
+/// `Name`s can be used to retrieve the latest published value from the w3name service
 /// using [W3NameClient](crate::client::W3NameClient).
 ///
 /// Note that `Name` contains only the public verification key and does not allow publishing
@@ -24,6 +26,21 @@ const LIBP2P_MULTICODEC: u64 = 0x72;
 pub struct Name(PublicKey);
 
 impl Name {
+  /// Parses a `Name` from the string form of a name identifier.
+  /// 
+  /// ## Example
+  /// 
+  /// ```rust
+  /// use w3name::Name;
+  /// 
+  /// let name_str = "k51qzi5uqu5dka3tmn6ipgsrq1u2bkuowdwlqcw0vibledypt1y9y5i8v8xwvu";
+  /// let name = Name::parse(name_str).unwrap();
+  /// 
+  /// assert_eq!(name_str, &name.to_string());
+  /// 
+  /// let invalid_name_str = "not a valid public key string";
+  /// assert!(Name::parse(invalid_name_str).is_err());
+  /// ```
   pub fn parse<S: AsRef<str>>(s: S) -> ResultStack<Name, NameError> {
     let res = Cid::try_from(s.as_ref());
     let c = res
@@ -41,24 +58,92 @@ impl Name {
     Ok(Name(pk))
   }
 
+  /// Returns a reference to this `Name`'s [PublicKey].
+  /// 
+  /// ## Example
+  /// 
+  /// ```rust
+  /// use w3name::Name;
+  /// use libp2p_core::identity::PublicKey;
+  /// 
+  /// let name = Name::parse("k51qzi5uqu5dka3tmn6ipgsrq1u2bkuowdwlqcw0vibledypt1y9y5i8v8xwvu").unwrap();
+  /// 
+  /// match name.public_key() {
+  ///   &PublicKey::Ed25519(_) => println!("it's an ed25519 key, alright"),
+  ///   _ => panic!("that's odd, I could have sworn that the key was ed25519..."),
+  /// }
+  /// 
+  /// ```
   pub fn public_key(&self) -> &PublicKey {
     &self.0
   }
 
+  /// Returns this `Name` encoded as a [Cid], using the "identity" hash function to embed the key into the Cid itself.
+  /// 
+  /// ## Example
+  /// 
+  /// ```rust
+  /// use w3name::Name;
+  /// 
+  /// let name = Name::parse("k51qzi5uqu5dka3tmn6ipgsrq1u2bkuowdwlqcw0vibledypt1y9y5i8v8xwvu").unwrap();
+  /// 
+  /// let cid = name.to_cid();
+  /// // Cid::to_string() returns a base32-encoded string, but w3name uses base36.
+  /// 
+  /// let expected_cid_string = "bafzaajaiaejcbjdinwzcqwpdydtsxcfnvu2qak2zqpsss5zqqf5od54tk4ufkcf2";
+  /// assert_eq!(&cid.to_string(), expected_cid_string);
+  /// ```
   pub fn to_cid(&self) -> Cid {
     let key_bytes = self.0.to_protobuf_encoding();
     let hash = Hasher::Identity.digest(&key_bytes[..]);
     Cid::new_v1(LIBP2P_MULTICODEC, hash)
   }
 
+  /// Returns a `Vec<u8>` containing the binary form of the [Cid] representing this `Name`.
+  /// 
+  /// ## Example
+  /// 
+  /// ```rust
+  /// use w3name::Name;
+  /// use cid::Cid;
+  /// 
+  /// let name = Name::parse("k51qzi5uqu5dka3tmn6ipgsrq1u2bkuowdwlqcw0vibledypt1y9y5i8v8xwvu").unwrap();
+  /// 
+  /// let bytes = name.to_bytes();
+  /// let cid = Cid::read_bytes(&bytes[..]).unwrap();
+  /// 
+  /// assert_eq!(cid, name.to_cid());
+  /// ```
   pub fn to_bytes(&self) -> Vec<u8> {
     self.to_cid().to_bytes()
   }
 
+  /// Returns the public key in the "canonical" string format for name identifiers used by w3name.
+  /// 
+  /// The returned string is a base36-encoded representation of [Name::to_cid()].
+  /// This is the same format expected by [Name::parse()].
+  /// 
+  /// ## Example
+  /// 
+  /// ```rust
+  /// use w3name::Name;
+  /// 
+  /// let name_str = "k51qzi5uqu5dka3tmn6ipgsrq1u2bkuowdwlqcw0vibledypt1y9y5i8v8xwvu";
+  /// let name = Name::parse(name_str).unwrap();
+  /// 
+  /// assert_eq!(name_str, &name.to_string());
+  /// ```
   pub fn to_string(&self) -> String {
     self.to_cid().to_string_of_base(Base::Base36Lower).unwrap()
   }
 }
+
+impl Display for Name {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    write!(f, "{}", self.to_string())
+  }
+}
+
 
 #[derive(Clone, Debug)]
 pub struct WritableName(Keypair);
@@ -95,6 +180,12 @@ impl WritableName {
 
   pub fn to_string(&self) -> String {
     self.to_name().to_string()
+  }
+}
+
+impl Display for WritableName {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    write!(f, "{}", self.to_string())
   }
 }
 
