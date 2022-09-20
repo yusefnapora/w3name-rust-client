@@ -1,9 +1,9 @@
 use std::fmt::Display;
 
+use crate::{error::ProtobufError, hash::Hasher};
 use cid::Cid;
 use libp2p_core::identity::{Keypair, PublicKey};
 use multibase::Base;
-use crate::{hash::Hasher, error::ProtobufError};
 use multihash::MultihashDigest;
 
 use error_stack::{report, IntoReport, Result, ResultExt};
@@ -26,21 +26,21 @@ pub struct Name(PublicKey);
 
 impl Name {
   /// Parses a `Name` from the string form of a name identifier.
-  /// 
+  ///
   /// ## Example
-  /// 
+  ///
   /// ```rust
   /// # fn main() -> error_stack::Result<(), w3name::error::NameError> {
   /// use w3name::Name;
-  /// 
+  ///
   /// let name_str = "k51qzi5uqu5dka3tmn6ipgsrq1u2bkuowdwlqcw0vibledypt1y9y5i8v8xwvu";
   /// let name = Name::parse(name_str)?;
-  /// 
+  ///
   /// assert_eq!(name_str, &name.to_string());
-  /// 
+  ///
   /// let invalid_name_str = "not a valid public key string";
   /// assert!(Name::parse(invalid_name_str).is_err());
-  /// 
+  ///
   /// # Ok(())
   /// # }
   /// ```
@@ -62,42 +62,42 @@ impl Name {
   }
 
   /// Returns a reference to this `Name`'s [PublicKey].
-  /// 
+  ///
   /// ## Example
-  /// 
+  ///
   /// ```rust
   /// # fn main() -> error_stack::Result<(), w3name::error::NameError> {
   /// use w3name::Name;
   /// use libp2p_core::identity::PublicKey;
-  /// 
+  ///
   /// let name = Name::parse("k51qzi5uqu5dka3tmn6ipgsrq1u2bkuowdwlqcw0vibledypt1y9y5i8v8xwvu")?;
-  /// 
+  ///
   /// match name.public_key() {
   ///   &PublicKey::Ed25519(_) => println!("it's an ed25519 key, alright"),
   ///   _ => panic!("that's odd, I could have sworn that the key was ed25519..."),
   /// }
-  /// 
+  ///
   /// # Ok(())
   /// # }
-  /// 
+  ///
   /// ```
   pub fn public_key(&self) -> &PublicKey {
     &self.0
   }
 
   /// Returns this `Name` encoded as a [Cid], using the "identity" hash function to embed the key into the Cid itself.
-  /// 
+  ///
   /// ## Example
-  /// 
+  ///
   /// ```rust
   /// # fn main() -> error_stack::Result<(), w3name::error::NameError> {
   /// use w3name::Name;
-  /// 
+  ///
   /// let name = Name::parse("k51qzi5uqu5dka3tmn6ipgsrq1u2bkuowdwlqcw0vibledypt1y9y5i8v8xwvu")?;
-  /// 
+  ///
   /// let cid = name.to_cid();
   /// // Cid::to_string() returns a base32-encoded string, but w3name uses base36.
-  /// 
+  ///
   /// let expected_cid_string = "bafzaajaiaejcbjdinwzcqwpdydtsxcfnvu2qak2zqpsss5zqqf5od54tk4ufkcf2";
   /// assert_eq!(&cid.to_string(), expected_cid_string);
   /// # Ok(())
@@ -110,19 +110,19 @@ impl Name {
   }
 
   /// Returns a `Vec<u8>` containing the binary form of the [Cid] representing this `Name`.
-  /// 
+  ///
   /// ## Example
-  /// 
+  ///
   /// ```rust
   /// # fn main() -> error_stack::Result<(), w3name::error::NameError> {
   /// use w3name::Name;
   /// use cid::Cid;
-  /// 
+  ///
   /// let name = Name::parse("k51qzi5uqu5dka3tmn6ipgsrq1u2bkuowdwlqcw0vibledypt1y9y5i8v8xwvu")?;
-  /// 
+  ///
   /// let bytes = name.to_bytes();
   /// let cid = Cid::read_bytes(&bytes[..]).unwrap();
-  /// 
+  ///
   /// assert_eq!(cid, name.to_cid());
   /// # Ok(())
   /// # }
@@ -132,19 +132,19 @@ impl Name {
   }
 
   /// Returns the public key in the "canonical" string format for name identifiers used by w3name.
-  /// 
+  ///
   /// The returned string is a base36-encoded representation of [Name::to_cid()].
   /// This is the same format expected by [Name::parse()].
-  /// 
+  ///
   /// ## Example
-  /// 
+  ///
   /// ```rust
   /// # fn main() -> error_stack::Result<(), w3name::error::NameError> {
   /// use w3name::Name;
-  /// 
+  ///
   /// let name_str = "k51qzi5uqu5dka3tmn6ipgsrq1u2bkuowdwlqcw0vibledypt1y9y5i8v8xwvu";
   /// let name = Name::parse(name_str)?;
-  /// 
+  ///
   /// assert_eq!(name_str, &name.to_string());
   /// # Ok(())
   /// # }
@@ -161,14 +161,13 @@ impl Display for Name {
 }
 
 /// `WritableName` represnts a public/private keypair that can be used to sign name records for publication.
-/// 
+///
 /// You can use a `WritableName` to publish a value to the w3name service using [W3NameClient::publish()](crate::W3NameClient::publish).
-/// 
+///
 #[derive(Clone, Debug)]
 pub struct WritableName(Keypair);
 
 impl WritableName {
-
   /// Creates a new `WritableName` by generating an ed25519 keypair.
   pub fn new() -> WritableName {
     let kp = Keypair::generate_ed25519();
@@ -176,20 +175,20 @@ impl WritableName {
   }
 
   /// Decodes a `WritableName` from a binary encoding of a keypair as produced by [encode](Self::encode).
-  /// 
+  ///
   /// ## Example
-  /// 
+  ///
   /// ```rust
   /// # fn main() -> error_stack::Result<(), w3name::error::ProtobufError> {
-  /// 
+  ///
   /// use w3name::WritableName;
-  /// 
+  ///
   /// let w = WritableName::new();
   /// let bytes = w.encode()?;
   /// let w2 = WritableName::decode(&bytes)?;
-  /// 
+  ///
   /// assert_eq!(w, w2);
-  /// 
+  ///
   /// # Ok(())
   /// # }
   /// ```
@@ -204,31 +203,35 @@ impl WritableName {
   /// Encodes a `WritableName` into a binary representation, suitable for [decode](Self::decode).
   ///
   /// ## Example
-  /// 
+  ///
   /// ```rust
   /// # fn main() -> error_stack::Result<(), w3name::error::ProtobufError> {
   /// use w3name::WritableName;
-  /// 
+  ///
   /// let w = WritableName::new();
   /// let bytes = w.encode()?;
   /// let w2 = WritableName::decode(&bytes)?;
-  /// 
+  ///
   /// assert_eq!(w, w2);
   /// # Ok(())
   /// # }
-  /// ``` 
+  /// ```
   pub fn encode(&self) -> Result<Vec<u8>, ProtobufError> {
-    self.keypair().to_protobuf_encoding().report().change_context(ProtobufError)
+    self
+      .keypair()
+      .to_protobuf_encoding()
+      .report()
+      .change_context(ProtobufError)
   }
 
   /// Returns a reference to this `WritableName`'s underlying [Keypair].
-  /// 
+  ///
   /// ## Example
-  /// 
+  ///
   /// ```rust
   /// use w3name::WritableName;
   /// use libp2p_core::identity::Keypair;
-  /// 
+  ///
   /// let w = WritableName::new();
   /// match w.keypair() {
   ///   &Keypair::Ed25519(_) => println!("it's an ed25519 keypair!"),
@@ -242,13 +245,13 @@ impl WritableName {
   /// Returns a `Name` that represents the public half of this `WritableName`'s keypair.
   ///
   /// ## Example
-  /// 
+  ///
   /// ```rust
   /// use w3name::WritableName;
-  /// 
+  ///
   /// let w = WritableName::new();
   /// let n = w.to_name();
-  /// 
+  ///
   /// assert_eq!(&w.keypair().public(), n.public_key());
   /// ```
   pub fn to_name(&self) -> Name {
@@ -256,18 +259,18 @@ impl WritableName {
   }
 
   /// Convenience wrapper around `Self::to_name().to_cid()` that returns the Cid form of the **public** portion of this `WritableName`'s keypair.
-  /// 
-  /// Please note that this does not encode the private key. 
+  ///
+  /// Please note that this does not encode the private key.
   /// If you want to save the `WritableName`, use [encode](Self::encode).
-  /// 
+  ///
   /// ## Example
-  /// 
+  ///
   /// ```rust
   /// use w3name::WritableName;
-  /// 
+  ///
   /// let w = WritableName::new();
   /// let n = w.to_name();
-  /// 
+  ///
   /// assert_eq!(w.to_cid(), n.to_cid());
   /// ```
   pub fn to_cid(&self) -> Cid {
@@ -275,18 +278,18 @@ impl WritableName {
   }
 
   /// Convenience wrapper around `Self::to_name().to_string()` that returns a string encoding of the public key (aka the "name identifier").
-  /// 
+  ///
   /// Please note that this does not encode the private key.
   /// If you want to save the `WritableName`, use [encode](Self::encode).
-  /// 
+  ///
   /// ## Example
-  /// 
+  ///
   /// ```rust
   /// use w3name::WritableName;
-  /// 
+  ///
   /// let w = WritableName::new();
   /// let n = w.to_name();
-  /// 
+  ///
   /// assert_eq!(w.to_string(), n.to_string());
   pub fn to_string(&self) -> String {
     self.to_name().to_string()
@@ -311,7 +314,7 @@ impl PartialEq for WritableName {
         let our_key_bytes = our_key.encode();
         let their_key_bytes = their_key.encode();
         our_key_bytes == their_key_bytes
-      },
+      }
 
       // we only support Ed25519 keys, so if we have anything else, return false
       _ => false,

@@ -35,9 +35,8 @@ enum Commands {
 
   /// Create a new public/private keypair and save it to disk.
   Create {
-
     /// Filename to write the key to.
-    /// 
+    ///
     /// If not given, will write to a file named `<name>.key`,
     /// where `<name>` is the string form of the public key.
     #[clap(short, long, value_parser)]

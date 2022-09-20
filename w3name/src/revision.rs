@@ -1,12 +1,12 @@
-use crate::{name::Name, error::CborError};
+use crate::{error::CborError, name::Name};
 use chrono::{DateTime, Duration, SecondsFormat, Utc};
-use error_stack::{Result, ResultExt, IntoReport};
+use error_stack::{IntoReport, Result, ResultExt};
 
 /// A `Revision` represents a single value for a name record.
-/// 
+///
 /// A `Revision` is essentially an IPNS entry without a signature, and it
 /// contains all the information needed to construct an IPNS entry for signing.
-/// 
+///
 /// Each `Revision` contains a sequence number, which must be incremented when publishing
 /// updates to an existing `Revision`. To create the initial `Revision` (with sequence number == 0),
 /// use [Revision::v0]. Subsequent `Revision`s are created by calling [increment](Revision::increment)
@@ -21,7 +21,7 @@ pub struct Revision {
 
 impl Revision {
   /// Creates a new `Revision`, specifying all fields.
-  /// 
+  ///
   /// Note that this is crate-only; users should use [Self::v0] or [Self:::increment]
   pub(crate) fn new<S: AsRef<str>>(
     name: &Name,
@@ -45,40 +45,40 @@ impl Revision {
   /// ```rust
   /// # fn main() -> error_stack::Result<(), w3name::error::NameError> {
   /// use w3name::{Name, Revision};
-  /// 
+  ///
   /// let name = Name::parse("k51qzi5uqu5dka3tmn6ipgsrq1u2bkuowdwlqcw0vibledypt1y9y5i8v8xwvu")?;
   /// let rev = Revision::v0(&name, "an initial value");
-  /// 
+  ///
   /// assert_eq!(&name, rev.name());
   /// assert_eq!(rev.value(), "an initial value");
   /// # Ok(())
   /// # }
-  /// 
-  /// 
+  ///
+  ///
   /// ```
   pub fn v0<S: AsRef<str>>(name: &Name, value: S) -> Revision {
     Revision {
-        name: name.clone(),
-        value: value.as_ref().to_string(),
-        sequence: 0,
-        validity: default_validity(),
+      name: name.clone(),
+      value: value.as_ref().to_string(),
+      sequence: 0,
+      validity: default_validity(),
     }
   }
 
   /// Creates the initial `Revision` for the given [Name], with an explicit validity period.
-  /// 
+  ///
   /// Note that `validity` is an end-of-life timestamp, not a duration.
-  /// 
+  ///
   /// ## Example
-  /// 
+  ///
   /// ```rust
   /// # fn main () -> error_stack::Result<(), w3name::error::NameError> {
   /// use w3name::{Name, Revision};
   /// use chrono::{Duration, Utc};
-  /// 
+  ///
   /// // set the expiration date to two weeks from now:
   /// let expiration_date = Utc::now().checked_add_signed(Duration::weeks(2)).unwrap();
-  /// 
+  ///
   /// let name = Name::parse("k51qzi5uqu5dka3tmn6ipgsrq1u2bkuowdwlqcw0vibledypt1y9y5i8v8xwvu")?;
   /// let rev = Revision::v0_with_validity(&name, "an initial value", expiration_date);
   ///
@@ -99,22 +99,22 @@ impl Revision {
   /// Creates a new `Revision` with the given `value` and an incremented sequence number, using the default validity period (1 year).
   ///
   /// ## Example
-  /// 
+  ///
   /// ```rust
   /// # fn main() -> error_stack::Result<(), w3name::error::NameError> {
   /// use w3name::{Name, Revision};
-  /// 
+  ///
   /// let name = Name::parse("k51qzi5uqu5dka3tmn6ipgsrq1u2bkuowdwlqcw0vibledypt1y9y5i8v8xwvu")?;
   /// let rev = Revision::v0(&name, "an initial value");
   /// let rev2 = rev.increment("a new value");
-  /// 
+  ///
   /// assert_eq!(&name, rev.name());
   /// assert_eq!(&name, rev2.name());
   /// assert_eq!(rev.sequence(), 0);
   /// assert_eq!(rev2.sequence(), 1);
   /// assert_eq!(rev.value(), "an initial value");
   /// assert_eq!(rev2.value(), "a new value");
-  /// 
+  ///
   /// # Ok(())
   /// # }
   /// ```
@@ -123,9 +123,13 @@ impl Revision {
   }
 
   /// Creates a new `Revision` with the given `value` and an incremented sequence number, with an explicit validity period.
-  /// 
+  ///
   /// Note that `validity` is an end-of-life timestamp, not a duration.
-  pub fn increment_with_validity<S: AsRef<str>>(&self, value: S, validity: DateTime<Utc>) -> Revision {
+  pub fn increment_with_validity<S: AsRef<str>>(
+    &self,
+    value: S,
+    validity: DateTime<Utc>,
+  ) -> Revision {
     let sequence = self.sequence + 1;
     Revision {
       name: self.name.clone(),
@@ -161,23 +165,23 @@ impl Revision {
   }
 
   /// Encodes this `Revision` to a binary form, suitable for use with [Revision::decode].
-  /// 
+  ///
   /// Note that encoded `Revision`s are not signed and cannot be used directly as IPNS records.
-  /// 
+  ///
   /// ## Example
-  /// 
+  ///
   /// ```rust
   /// # fn main() -> error_stack::Result<(), w3name::error::CborError> {
   /// use w3name::{Name, Revision};
-  /// 
+  ///
   /// let name = Name::parse("k51qzi5uqu5dka3tmn6ipgsrq1u2bkuowdwlqcw0vibledypt1y9y5i8v8xwvu").unwrap();
-  /// let rev = Revision::v0(&name, "an initial value"); 
-  /// 
+  /// let rev = Revision::v0(&name, "an initial value");
+  ///
   /// let bytes = rev.encode()?;
   /// let rev2 = Revision::decode(&bytes)?;
-  /// 
+  ///
   /// assert_eq!(rev, rev2);
-  /// 
+  ///
   /// # Ok(())
   /// # }
   /// ```
@@ -188,38 +192,44 @@ impl Revision {
       sequence: self.sequence,
       validity: self.validity_string(),
     };
-    let bytes = serde_cbor::to_vec(&data).report().change_context(CborError)?;
+    let bytes = serde_cbor::to_vec(&data)
+      .report()
+      .change_context(CborError)?;
     Ok(bytes)
   }
 
   /// Decodes a `Revision` from a binary form as produced by [Revision::encode].
-  /// 
+  ///
   /// ## Example
-  /// 
+  ///
   /// ```rust
   /// # fn main() -> error_stack::Result<(), w3name::error::CborError> {
   /// use w3name::{Name, Revision};
-  /// 
+  ///
   /// let name = Name::parse("k51qzi5uqu5dka3tmn6ipgsrq1u2bkuowdwlqcw0vibledypt1y9y5i8v8xwvu").unwrap();
-  /// let rev = Revision::v0(&name, "an initial value"); 
-  /// 
+  /// let rev = Revision::v0(&name, "an initial value");
+  ///
   /// let bytes = rev.encode()?;
   /// let rev2 = Revision::decode(&bytes)?;
-  /// 
+  ///
   /// assert_eq!(rev, rev2);
-  /// 
+  ///
   /// # Ok(())
   /// # }
   pub fn decode(bytes: &[u8]) -> Result<Revision, CborError> {
-    let data: RevisionCbor = serde_cbor::from_slice(bytes).report().change_context(CborError)?;
+    let data: RevisionCbor = serde_cbor::from_slice(bytes)
+      .report()
+      .change_context(CborError)?;
     let name = Name::parse(data.name).change_context(CborError)?;
-    let validity = DateTime::parse_from_rfc3339(&data.validity).report().change_context(CborError)?;
+    let validity = DateTime::parse_from_rfc3339(&data.validity)
+      .report()
+      .change_context(CborError)?;
 
     let rev = Revision {
-        name,
-        value: data.value,
-        sequence: data.sequence,
-        validity: validity.into(),
+      name,
+      value: data.value,
+      sequence: data.sequence,
+      validity: validity.into(),
     };
 
     Ok(rev)
@@ -230,7 +240,6 @@ fn default_validity() -> DateTime<Utc> {
   Utc::now().checked_add_signed(Duration::weeks(52)).unwrap()
 }
 
-
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
 struct RevisionCbor {
   name: String,
@@ -239,12 +248,11 @@ struct RevisionCbor {
   validity: String,
 }
 
-
 #[cfg(test)]
 mod tests {
   use crate::WritableName;
 
-use super::*;
+  use super::*;
 
   fn make_test_revision(value: &str) -> Revision {
     let w = WritableName::new();
@@ -260,5 +268,4 @@ use super::*;
 
     assert_eq!(rev, rev2);
   }
-
 }

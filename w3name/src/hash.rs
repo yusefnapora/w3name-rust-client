@@ -1,6 +1,5 @@
 use multihash::derive::Multihash;
 
-
 /// Hasher is a custom Multihash "code table" with just the identity hash function enabled.
 #[derive(Clone, Copy, Debug, Eq, Multihash, PartialEq)]
 #[mh(alloc_size = 64)]
