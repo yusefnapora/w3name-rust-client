@@ -30,15 +30,19 @@ impl Name {
   /// ## Example
   /// 
   /// ```rust
+  /// # fn main() -> error_stack::Result<(), w3name::error::NameError> {
   /// use w3name::Name;
   /// 
   /// let name_str = "k51qzi5uqu5dka3tmn6ipgsrq1u2bkuowdwlqcw0vibledypt1y9y5i8v8xwvu";
-  /// let name = Name::parse(name_str).unwrap();
+  /// let name = Name::parse(name_str)?;
   /// 
   /// assert_eq!(name_str, &name.to_string());
   /// 
   /// let invalid_name_str = "not a valid public key string";
   /// assert!(Name::parse(invalid_name_str).is_err());
+  /// 
+  /// # Ok(())
+  /// # }
   /// ```
   pub fn parse<S: AsRef<str>>(s: S) -> Result<Name, NameError> {
     let res = Cid::try_from(s.as_ref());
@@ -62,15 +66,19 @@ impl Name {
   /// ## Example
   /// 
   /// ```rust
+  /// # fn main() -> error_stack::Result<(), w3name::error::NameError> {
   /// use w3name::Name;
   /// use libp2p_core::identity::PublicKey;
   /// 
-  /// let name = Name::parse("k51qzi5uqu5dka3tmn6ipgsrq1u2bkuowdwlqcw0vibledypt1y9y5i8v8xwvu").unwrap();
+  /// let name = Name::parse("k51qzi5uqu5dka3tmn6ipgsrq1u2bkuowdwlqcw0vibledypt1y9y5i8v8xwvu")?;
   /// 
   /// match name.public_key() {
   ///   &PublicKey::Ed25519(_) => println!("it's an ed25519 key, alright"),
   ///   _ => panic!("that's odd, I could have sworn that the key was ed25519..."),
   /// }
+  /// 
+  /// # Ok(())
+  /// # }
   /// 
   /// ```
   pub fn public_key(&self) -> &PublicKey {
@@ -82,15 +90,18 @@ impl Name {
   /// ## Example
   /// 
   /// ```rust
+  /// # fn main() -> error_stack::Result<(), w3name::error::NameError> {
   /// use w3name::Name;
   /// 
-  /// let name = Name::parse("k51qzi5uqu5dka3tmn6ipgsrq1u2bkuowdwlqcw0vibledypt1y9y5i8v8xwvu").unwrap();
+  /// let name = Name::parse("k51qzi5uqu5dka3tmn6ipgsrq1u2bkuowdwlqcw0vibledypt1y9y5i8v8xwvu")?;
   /// 
   /// let cid = name.to_cid();
   /// // Cid::to_string() returns a base32-encoded string, but w3name uses base36.
   /// 
   /// let expected_cid_string = "bafzaajaiaejcbjdinwzcqwpdydtsxcfnvu2qak2zqpsss5zqqf5od54tk4ufkcf2";
   /// assert_eq!(&cid.to_string(), expected_cid_string);
+  /// # Ok(())
+  /// # }
   /// ```
   pub fn to_cid(&self) -> Cid {
     let key_bytes = self.0.to_protobuf_encoding();
@@ -103,15 +114,18 @@ impl Name {
   /// ## Example
   /// 
   /// ```rust
+  /// # fn main() -> error_stack::Result<(), w3name::error::NameError> {
   /// use w3name::Name;
   /// use cid::Cid;
   /// 
-  /// let name = Name::parse("k51qzi5uqu5dka3tmn6ipgsrq1u2bkuowdwlqcw0vibledypt1y9y5i8v8xwvu").unwrap();
+  /// let name = Name::parse("k51qzi5uqu5dka3tmn6ipgsrq1u2bkuowdwlqcw0vibledypt1y9y5i8v8xwvu")?;
   /// 
   /// let bytes = name.to_bytes();
   /// let cid = Cid::read_bytes(&bytes[..]).unwrap();
   /// 
   /// assert_eq!(cid, name.to_cid());
+  /// # Ok(())
+  /// # }
   /// ```
   pub fn to_bytes(&self) -> Vec<u8> {
     self.to_cid().to_bytes()
@@ -125,12 +139,15 @@ impl Name {
   /// ## Example
   /// 
   /// ```rust
+  /// # fn main() -> error_stack::Result<(), w3name::error::NameError> {
   /// use w3name::Name;
   /// 
   /// let name_str = "k51qzi5uqu5dka3tmn6ipgsrq1u2bkuowdwlqcw0vibledypt1y9y5i8v8xwvu";
-  /// let name = Name::parse(name_str).unwrap();
+  /// let name = Name::parse(name_str)?;
   /// 
   /// assert_eq!(name_str, &name.to_string());
+  /// # Ok(())
+  /// # }
   /// ```
   pub fn to_string(&self) -> String {
     self.to_cid().to_string_of_base(Base::Base36Lower).unwrap()
@@ -163,13 +180,18 @@ impl WritableName {
   /// ## Example
   /// 
   /// ```rust
+  /// # fn main() -> error_stack::Result<(), w3name::error::ProtobufError> {
+  /// 
   /// use w3name::WritableName;
   /// 
   /// let w = WritableName::new();
-  /// let bytes = w.encode().unwrap();
-  /// let w2 = WritableName::decode(&bytes).unwrap();
+  /// let bytes = w.encode()?;
+  /// let w2 = WritableName::decode(&bytes)?;
   /// 
   /// assert_eq!(w, w2);
+  /// 
+  /// # Ok(())
+  /// # }
   /// ```
   pub fn decode(key_bytes: &[u8]) -> Result<WritableName, ProtobufError> {
     let mut kb = key_bytes.to_vec(); // from_protobuf_encoding takes &mut, so clone instead of requiring the same
@@ -184,13 +206,16 @@ impl WritableName {
   /// ## Example
   /// 
   /// ```rust
+  /// # fn main() -> error_stack::Result<(), w3name::error::ProtobufError> {
   /// use w3name::WritableName;
   /// 
   /// let w = WritableName::new();
-  /// let bytes = w.encode().unwrap();
-  /// let w2 = WritableName::decode(&bytes).unwrap();
+  /// let bytes = w.encode()?;
+  /// let w2 = WritableName::decode(&bytes)?;
   /// 
   /// assert_eq!(w, w2);
+  /// # Ok(())
+  /// # }
   /// ``` 
   pub fn encode(&self) -> Result<Vec<u8>, ProtobufError> {
     self.keypair().to_protobuf_encoding().report().change_context(ProtobufError)
