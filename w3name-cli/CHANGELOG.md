@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.1.4](https://github.com/yusefnapora/w3name-rust-client/compare/w3name-cli-v0.1.3...w3name-cli-v0.1.4) (2022-09-21)
+
+
+### Miscellaneous Chores
+
+* release 0.1.4 ([1b03792](https://github.com/yusefnapora/w3name-rust-client/commit/1b03792607f5b7a6ce930176c1ae1bb36336c8e1))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * w3name bumped from 0.1.3 to 0.1.4
+
 ## [0.1.3](https://github.com/yusefnapora/w3name-rust-client/compare/w3name-cli-v0.1.2...w3name-cli-v0.1.3) (2022-09-21)
 
 
