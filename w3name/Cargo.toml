@@ -1,6 +1,6 @@
 [package]
 name = "w3name"
-version = "0.1.0"
+version = "0.1.1"
 description = "A client library for the w3name service"
 license = "MIT OR Apache-2.0"
 homepage = "https://github.com/yusefnapora/w3name-rust-client"
