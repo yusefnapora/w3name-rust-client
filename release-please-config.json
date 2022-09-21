@@ -1,0 +1,15 @@
+{
+  "packages": {
+    "w3name": {
+      "release-type": "rust"
+    },
+    "w3name-cli": {
+      "release-type": "rust"
+    }
+  },
+
+  "release-type": "rust",
+  "plugins": ["cargo-workspace"],
+
+  "bootstrap-sha": "0cdcbd5483b93f93322bec728be26eb4291bc916"
+}
