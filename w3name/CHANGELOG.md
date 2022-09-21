@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.4](https://github.com/yusefnapora/w3name-rust-client/compare/w3name-v0.1.3...w3name-v0.1.4) (2022-09-21)
+
+
+### Miscellaneous Chores
+
+* release 0.1.4 ([1b03792](https://github.com/yusefnapora/w3name-rust-client/commit/1b03792607f5b7a6ce930176c1ae1bb36336c8e1))
+
 ## [0.1.3](https://github.com/yusefnapora/w3name-rust-client/compare/w3name-v0.1.2...w3name-v0.1.3) (2022-09-21)
 
 
