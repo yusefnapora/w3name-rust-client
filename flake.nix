@@ -12,7 +12,7 @@
         naersk-lib = pkgs.callPackage naersk { };
 
         # native deps needed to build openssl and compile protobufs
-        native-deps = with pkgs; [ protobuf perl ];
+        native-deps = with pkgs; [ protobuf perl cmake ];
       in
       {
         defaultPackage = naersk-lib.buildPackage {
