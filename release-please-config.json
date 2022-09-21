@@ -1,7 +1,8 @@
 {
   "packages": {
     "w3name": {
-      "release-type": "rust"
+      "release-type": "rust",
+      "skip-github-release": true
     },
     "w3name-cli": {
       "release-type": "rust"
