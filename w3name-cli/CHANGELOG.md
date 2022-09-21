@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.0](https://github.com/yusefnapora/w3name-rust-client/compare/w3name-cli-v0.1.4...w3name-cli-v0.2.0) (2022-09-21)
+
+
+### Features
+
+* add feature to build protoc from src ([#22](https://github.com/yusefnapora/w3name-rust-client/issues/22)) ([2bfb208](https://github.com/yusefnapora/w3name-rust-client/commit/2bfb20822f3c53a9198b58c57b324debec5e721d))
+
 ## [0.1.4](https://github.com/yusefnapora/w3name-rust-client/compare/w3name-cli-v0.1.3...w3name-cli-v0.1.4) (2022-09-21)
 
 
