@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.1](https://github.com/yusefnapora/w3name-rust-client/compare/w3name-cli-v0.2.0...w3name-cli-v0.2.1) (2022-09-22)
+
+
+### Bug Fixes
+
+* handle 404 errors, fix error handling for client.resolve ([#23](https://github.com/yusefnapora/w3name-rust-client/issues/23)) ([234ea11](https://github.com/yusefnapora/w3name-rust-client/commit/234ea118efef86c0fa454a3e9f4bbb98e7929ff9))
+
 ## [0.2.0](https://github.com/yusefnapora/w3name-rust-client/compare/w3name-cli-v0.1.4...w3name-cli-v0.2.0) (2022-09-21)
 
 
