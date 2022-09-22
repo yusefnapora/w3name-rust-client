@@ -77,7 +77,11 @@ impl W3NameClient {
       .change_context(HttpError)
       .change_context(ClientError)?;
 
-    parse_resolve_response(&name, res).await
+    if res.status().is_success() {
+      parse_resolve_response(&name, res).await
+    } else {
+      Err(error_from_response(res).await)
+    }
   }
 }
 
@@ -115,8 +119,9 @@ struct ResolveResponse {
 }
 
 async fn error_from_response(res: Response) -> Report<ClientError> {
+  let status = res.status();
   match res.json::<APIErrorResponse>().await {
-    Ok(json) => report!(APIError(json.message)).change_context(ClientError),
+    Ok(json) => report!(APIError{ message: json.message, status_code: status }).change_context(ClientError),
     Err(e) => report!(e)
       .change_context(UnexpectedAPIResponse)
       .change_context(ClientError),
