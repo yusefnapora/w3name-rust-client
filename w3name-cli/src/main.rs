@@ -1,9 +1,9 @@
-use std::{error::Error, fmt::Display, fs, path::PathBuf};
+use std::{error::Error, fmt::Display, fs, path::PathBuf, process::exit};
 
 use clap::{Parser, Subcommand};
-use error_stack::{IntoReport, Result, ResultExt};
+use error_stack::{IntoReport, Result, ResultExt, Report};
 
-use w3name::{Name, Revision, W3NameClient, WritableName};
+use w3name::{Name, Revision, W3NameClient, WritableName, error::{ClientError, APIError}};
 
 #[derive(Parser)]
 #[clap(name = "w3name", version, about, long_about = None)]
@@ -49,28 +49,44 @@ async fn main() {
   let cli = Cli::parse();
 
   use Commands::*;
-  match &cli.command {
+  let res = match &cli.command {
     Resolve { name } => {
-      resolve(name).await.expect("resolve error");
+      resolve(name).await
     }
 
     Publish { key, value } => {
-      publish(key, value).await.expect("publish error");
+      publish(key, value).await
     }
 
     Create { output } => {
-      create(output).expect("error creating name");
+      create(output)
     }
+  };
+
+  if let Err(err_report) = res {
+    eprintln!("{err_report:?}");
+    exit(1);
   }
 }
 
 async fn resolve(name_str: &str) -> Result<(), CliError> {
   let client = W3NameClient::default();
   let name = Name::parse(name_str).change_context(CliError)?;
-  let revision = client.resolve(&name).await.change_context(CliError)?;
+  match client.resolve(&name).await {
+    Ok(revision) => {
+      println!("{}", revision.value());
+      Ok(())
+    }
 
-  println!("{}", revision.value());
-  Ok(())
+    Err(err_report) => {
+      if is_404(&err_report) {
+        eprintln!("no record found for key {}", name_str);
+        Ok(())
+      } else {
+        Err(err_report.change_context(CliError))
+      }
+    },
+  }
 }
 
 fn create(output: &Option<PathBuf>) -> Result<(), CliError> {
@@ -100,8 +116,15 @@ async fn publish(key_file: &PathBuf, value: &str) -> Result<(), CliError> {
   let new_revision = match client.resolve(&writable.to_name()).await {
     Ok(revision) => revision.increment(value),
 
-    // TODO: only fallback to v0 if the name doesn't exist; bail on other errors
-    Err(_) => Revision::v0(&writable.to_name(), value),
+    // If the API returned a 404, create the initial (v0) Revision.
+    // Bail out for all other errors 
+    Err(err_report) => { 
+      if is_404(&err_report) {
+        Revision::v0(&writable.to_name(), value)
+      } else {
+        return Err(err_report.change_context(CliError))
+      }
+    },
   };
 
   client
@@ -117,12 +140,24 @@ async fn publish(key_file: &PathBuf, value: &str) -> Result<(), CliError> {
   Ok(())
 }
 
+
+/// Returns true if the error report contains an [APIError] with a 404 status
+fn is_404(report: &Report<ClientError>) -> bool {
+  let maybe_api_err: Option<&APIError> = report.downcast_ref();
+  if let Some(err) = maybe_api_err {
+    err.status_code == 404
+  } else {
+    false
+  }
+}
+
+
 #[derive(Debug)]
 struct CliError;
 
 impl Display for CliError {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-    write!(f, "error")
+    write!(f, "something went wrong")
   }
 }
 

@@ -24,11 +24,14 @@ impl Display for HttpError {
 impl Error for HttpError {}
 
 #[derive(Debug)]
-pub struct APIError(pub String);
+pub struct APIError { 
+  pub message: String,
+  pub status_code: reqwest::StatusCode,
+}
 
 impl Display for APIError {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-    write!(f, "api error: {}", self.0)
+    write!(f, "api error: [{}] {}", self.status_code, self.message)
   }
 }
 
