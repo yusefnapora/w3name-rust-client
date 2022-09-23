@@ -9,7 +9,7 @@ keywords = ["w3name", "IPNS", "IPFS", "web3"]
 edition = "2021"
 
 [package.metadata.docs.rs]
-rustc-args = ["--cfg", "feature=protoc-src"]
+rustc-args = ["--cfg", "feature=\"protoc-src\""]
 
 [features]
 protoc-src = ["dep:protobuf-src"]
