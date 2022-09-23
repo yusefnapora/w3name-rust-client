@@ -1,5 +1,9 @@
 # Changelog
 
+* The following workspace dependencies were updated
+  * dependencies
+    * w3name bumped from 0.1.5 to 0.1.6
+
 ## [0.2.1](https://github.com/yusefnapora/w3name-rust-client/compare/w3name-cli-v0.2.0...w3name-cli-v0.2.1) (2022-09-22)
 
 
