@@ -2,7 +2,9 @@
   "packages": {
     "w3name": {
       "release-type": "rust",
-      "skip-github-release": true
+      "skip-github-release": true,
+      "release-as": "0.1.7",
+      "last-release-sha": "4d5d11ebb88f68d44e325eeaa174fd3ea178a939"
     },
     "w3name-cli": {
       "release-type": "rust"
