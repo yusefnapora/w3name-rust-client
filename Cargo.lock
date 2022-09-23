@@ -2257,7 +2257,7 @@ checksum = "6a02e4885ed3bc0f2de90ea6dd45ebcbb66dacffe03547fadbb0eeae2770887d"
 
 [[package]]
 name = "w3name"
-version = "0.1.4"
+version = "0.1.5"
 dependencies = [
  "base64",
  "chrono",
@@ -2281,7 +2281,7 @@ dependencies = [
 
 [[package]]
 name = "w3name-cli"
-version = "0.2.1"
+version = "0.2.2"
 dependencies = [
  "clap",
  "error-stack",
