@@ -3,12 +3,21 @@ on:
     branches:
       - main
 
-name: release-please
+name: release-plz
 jobs:
   release-please:
     runs-on: ubuntu-latest
     steps:
-      - uses: google-github-actions/release-please-action@v3
+      - name: install protobuf compiler
+        uses: arduino/setup-protoc@v1
         with:
-          token: ${{ secrets.RELEASE_PLEASE_GH_TOKEN }}
-          command: manifest
+          version: '3.20.2'
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Run release-plz
+        uses: MarcoIeni/release-plz-action@main
+        env:
+          GITHUB_TOKEN: ${{ secrets.RELEASE_PLEASE_GH_TOKEN }}
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
