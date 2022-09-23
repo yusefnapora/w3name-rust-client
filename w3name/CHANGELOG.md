@@ -1,4 +1,51 @@
 # Changelog
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [Unreleased]
+
+## [0.1.8] - 2022-09-23
+
+### Added
+- add feature to build protoc from src (#22)
+
+### Fixed
+- quote feature name in docs.rs build flags
+- use correct rustc flag in docs.rs build
+- handle 404 errors, fix error handling for client.resolve (#23)
+- remove optional keyword from protobuf definition
+- fix invalid keyword in cargo.toml
+- fix nix build (hopefully)
+- fix cbor issue (need to serialize Value & Validity as byte strings)
+
+### Other
+- release main (#27)
+- release main (#25)
+- manually bump versions, since ci is confused
+- release main (#24)
+- release main (#21)
+- release main (#20)
+- release main (#19)
+- release main (#16)
+- release main (#12)
+- cargo fmt
+- doc comments for Revision
+- avoid unwrap() in doc comments
+- add doc comments for WritableName, impl PartialEq
+- move Hasher to its own module
+- add doc comments for crate & Name struct
+- add LICENSE.md & update cargo metadata
+- serialize Revision to/from cbor
+- aarch64 build still needs work...
+- try setting PROTOC env var
+- try using vendored openssl
+- convert errors to error_stack reports
+- working publish & create commands for cli
+- resolve mostly works, but cbor errors when validating
+- scaffold out cli app
+# Changelog
 
 ## [0.1.7](https://github.com/yusefnapora/w3name-rust-client/compare/w3name-v0.1.6...w3name-v0.1.7) (2022-09-23)
 
