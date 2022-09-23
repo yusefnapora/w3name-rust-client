@@ -1,6 +1,6 @@
 [package]
 name = "w3name-cli"
-version = "0.2.4"
+version = "0.2.5"
 homepage = "https://github.com/yusefnapora/w3name-rust-client"
 repository = "https://github.com/yusefnapora/w3name-rust-client"
 description = "A command-line tool for publishing and verifying name records with the w3name service"

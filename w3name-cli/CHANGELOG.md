@@ -8,6 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.2.5] - 2022-09-23
 
+### Fixed
+- reset version number to latest published
+
+### Other
+- release (#30)
+
+## [0.2.5] - 2022-09-23
+
 ### Other
 - updated the following local packages: w3name
 # Changelog
