@@ -1,6 +1,6 @@
 [package]
 name = "w3name-cli"
-version = "0.2.3"
+version = "0.2.4"
 homepage = "https://github.com/yusefnapora/w3name-rust-client"
 repository = "https://github.com/yusefnapora/w3name-rust-client"
 description = "A command-line tool for publishing and verifying name records with the w3name service"
@@ -16,4 +16,4 @@ clap = { version = "3.2.22", features = ["derive"] }
 tokio = { version = "1", features = ["full"] }
 error-stack = "0.1.1"
 
-w3name = { version = "0.1.6", path = "../w3name" }
+w3name = { version = "0.1.7", path = "../w3name" }
