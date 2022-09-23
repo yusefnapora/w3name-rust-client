@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.6](https://github.com/yusefnapora/w3name-rust-client/compare/w3name-v0.1.5...w3name-v0.1.6) (2022-09-23)
+
+
+### Bug Fixes
+
+* use correct rustc flag in docs.rs build ([1cc8fea](https://github.com/yusefnapora/w3name-rust-client/commit/1cc8fead87dd1dbd0720dcc7ff9daee2ff938a2c))
+
 ## [0.1.4](https://github.com/yusefnapora/w3name-rust-client/compare/w3name-v0.1.4...w3name-v0.1.4) (2022-09-22)
 
 
