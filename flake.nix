@@ -28,7 +28,7 @@
         };
 
         devShell = with pkgs; mkShell {
-          buildInputs = [ cargo rustc rustfmt pre-commit rustPackages.clippy ] ++ native-deps;
+          buildInputs = [ cargo rustc rustfmt pre-commit rustPackages.clippy dagger cue ] ++ native-deps;
           RUST_SRC_PATH = rustPlatform.rustLibSrc;
         };
       });
