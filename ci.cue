@@ -46,9 +46,18 @@ dagger.#Plan & {
 				},
 			]
 		}
+
+		build: bash.#Run & {
+			input: deps.output
+			workdir: "/src"
+			script: contents: #"""
+				cargo build
+			"""#
+		}
+
 		// run the test suite inside the docker container
 		test: bash.#Run & {
-			input:   deps.output
+			input:   build.output
 			workdir: "/src"
 			script: contents: #"""
 				cargo test
