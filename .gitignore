@@ -1,4 +1,5 @@
 target/
+release-builds/
 result
 
 *.key

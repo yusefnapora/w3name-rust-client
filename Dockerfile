@@ -34,6 +34,10 @@ RUN if [ ! -z "${CROSS_MACOS}" ]; then \
     ln -s /build/osxcross/target/SDK/MacOSX10.11.sdk/System/ /System; \
   fi
 
+# cargo install a dummy lib to force the crates.io index to update, so we can cache it.
+# note that this will fail, since there's nothing to install, but we get the updated
+# index as a side effect
+RUN cargo install empty-library || true
 
 # Copy to /src
 WORKDIR /src
