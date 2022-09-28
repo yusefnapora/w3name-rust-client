@@ -1,0 +1,18 @@
+# This dockerfile is used to build and test things in CI, and can be ignored by end users.
+
+FROM rust:1.64
+
+# apt-get update
+RUN apt-get update
+
+# Install protobuf compiler & utils
+RUN apt-get install -y protobuf-compiler jq
+
+# cargo install a dummy lib to force the crates.io index to update, so we can cache it.
+# note that this will fail, since there's nothing to install, but we get the updated
+# index as a side effect
+RUN cargo install empty-library || true
+
+# Copy to /src
+WORKDIR /src
+COPY . .
