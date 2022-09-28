@@ -1,5 +1,0 @@
-[build]
-pre-build = "./cross-install-deps.sh"
-
-[build.env]
-passthrough = ["PROTOC=/opt/protobuf/bin/protoc"]

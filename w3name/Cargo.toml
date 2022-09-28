@@ -16,10 +16,10 @@ protoc-src = ["dep:protobuf-src"]
 
 [dependencies]
 
-libp2p-core = "0.36.0"
-cid = "0.8.6"
+libp2p-core = { version = "0.36.0", default-features = false, features = ["serde"] }
+cid = { version = "0.8.6", default-features = false, features = ["std"] }
 multibase = "0.9.1"
-multihash = { version = "0.16", default-features = false, features = ["std", "multihash-impl", "identity", "sha2"] }
+multihash = { version = "0.16", default-features = false, features = ["std", "multihash-impl", "identity"] }
 prost = "0.10"
 base64 = "0.13.0"
 serde = "1.0.144"
@@ -33,10 +33,10 @@ error-stack = "0.1.1"
 # many thanks to the author of this post: https://obviy.us/blog/2022/cross-compiling-rust-on-gha/
 #
 # note that this apparently requires perl to be installed to build openssl
-openssl = { version = "0.10", features = ["vendored"] }
+#openssl = { version = "0.10", features = ["vendored"] }
 
 # TODO: put these behind a feature flag? They're only needed for the client
-reqwest = { version = "0.11", features = ["json"] }
+reqwest = { version = "0.11", default-features = false, features = ["json", "rustls-tls"] }
 tokio = { version = "1", features = ["full"] }
 governor = "0.4.2"
 nonzero_ext = "0.3.0"
