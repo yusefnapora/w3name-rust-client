@@ -2,6 +2,7 @@ package ci
 
 import (
 	"dagger.io/dagger"
+	"dagger.io/dagger/core"
 	"universe.dagger.io/bash" // import this package to execute bash commands inside a docker container
 	"universe.dagger.io/docker" // import this package to set up docker
 )
@@ -18,8 +19,7 @@ dagger.#Plan & {
 	}
 
 	client: filesystem: { 
-		"release-builds/linux": write: contents: actions.release_build_linux.export.directories."linux"
-		"release-builds/macos": write: contents: actions.release_build_mac.export.directories."macos"
+		"release-builds": write: contents: actions.release_build_all.output
 	}
 
 
@@ -30,9 +30,9 @@ dagger.#Plan & {
 		}
 
 		// builds the "release image", which is the same as default but with cross compilers installed
-		release_image: docker.#Dockerfile & {
+		release_image_linux: docker.#Dockerfile & {
 			source: client.filesystem."./".read.contents
-			buildArg: CROSS_COMPILERS: "true"
+			buildArg: CROSS_LINUX: "true"
 		}
 
 		// builds an image with a cross compilation toolchain for macOS builds installed
@@ -41,11 +41,25 @@ dagger.#Plan & {
 			buildArg: CROSS_MACOS: "true"
 		}
 
+		// builds an image with the windows / GNU toolchain installed
+		release_image_win: docker.#Dockerfile & {
+			source: client.filesystem."./".read.contents
+			buildArg: CROSS_WINDOWS: "true"
+		}
+
+		release_build_all: core.#Merge & {
+			inputs: [ 
+				release_build_linux.export.directories.release,
+				release_build_mac.export.directories.release,
+				release_build_windows.export.directories.release,
+			] 
+		}
+
 		release_build_mac: bash.#Run & {
 			input: release_image_mac.output
 			workdir: "/src"
 			export: directories: {
-				"macos": dagger.#FS,
+				"release": dagger.#FS,
 			}
 			script: contents: #"""
 				CROSS_BIN=/build/osxcross/target/bin
@@ -58,16 +72,16 @@ dagger.#Plan & {
 				cargo build -p w3name-cli --release --target x86_64-apple-darwin
 
 				# make tarballs for each architecture
-				mkdir -p macos
-				tar -czf macos/w3name-cli-macos-x86_64.tar.gz -C target/x86_64-apple-darwin/release w3name
-				tar -czf macos/w3name-cli-macos-aarch64.tar.gz -C target/aarch64-apple-darwin/release w3name
+				mkdir -p release
+				tar -czf release/w3name-cli-macos-x86_64.tar.gz -C target/x86_64-apple-darwin/release w3name
+				tar -czf release/w3name-cli-macos-aarch64.tar.gz -C target/aarch64-apple-darwin/release w3name
 			"""#
 		}
 
 		release_build_linux: bash.#Run & {
-			input: release_image.output
+			input: release_image_linux.output
 			export: directories: {
-				"linux": dagger.#FS
+				"release": dagger.#FS
 			}
 			workdir: "/src"
 			script: contents: #"""
@@ -81,9 +95,25 @@ dagger.#Plan & {
 				cargo build -p w3name-cli --release --target x86_64-unknown-linux-gnu
 
 				# make tarballs for each architecture
-				mkdir -p linux
-				tar -czf linux/w3name-cli-linux-x86_64.tar.gz -C target/x86_64-unknown-linux-gnu/release w3name
-				tar -czf linux/w3name-cli-linux-aarch64.tar.gz -C target/aarch64-unknown-linux-gnu/release w3name
+				mkdir -p release
+				tar -czf release/w3name-cli-linux-x86_64.tar.gz -C target/x86_64-unknown-linux-gnu/release w3name
+				tar -czf release/w3name-cli-linux-aarch64.tar.gz -C target/aarch64-unknown-linux-gnu/release w3name
+			"""#
+		}
+
+		release_build_windows: bash.#Run & {
+			input: release_image_win.output
+			workdir: "/src"
+			export: directories: {
+				"release": dagger.#FS
+			}
+			script: contents: #"""
+				cargo build -p w3name-cli --release --target x86_64-pc-windows-gnu
+
+				# make a zip file containing the w3name.exe file
+				mkdir -p release
+				cd target/x86_64-pc-windows-gnu/release
+				zip /src/release/w3name-cli-windows-x86_64.zip w3name.exe
 			"""#
 		}
 

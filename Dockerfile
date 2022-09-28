@@ -2,8 +2,13 @@
 
 FROM rust:1.64
 
-ARG CROSS_COMPILERS
+ENV GITHUB_CLI_VERSION 2.16.1
+
+ARG CROSS_LINUX
 ARG CROSS_MACOS
+ARG CROSS_WINDOWS
+
+ARG TARGETARCH
 
 # apt-get update
 RUN apt-get update
@@ -11,8 +16,17 @@ RUN apt-get update
 # Install protobuf compiler
 RUN apt-get install -y protobuf-compiler
 
-# Install rust targets for cross compiling if CROSS_COMPILERS is non-empty
-RUN if [ ! -z "${CROSS_COMPILERS}" ]; then \
+# install the github cli 
+RUN set -ex; \
+    curl -L "https://github.com/cli/cli/releases/download/v${GITHUB_CLI_VERSION}/gh_${GITHUB_CLI_VERSION}_checksums.txt" -o checksums.txt; \
+    curl -OL "https://github.com/cli/cli/releases/download/v${GITHUB_CLI_VERSION}/gh_${GITHUB_CLI_VERSION}_linux_${TARGETARCH}.deb"; \
+    shasum --ignore-missing -a 512 -c checksums.txt; \
+	  dpkg -i "gh_${GITHUB_CLI_VERSION}_linux_${TARGETARCH}.deb"; \
+	  rm -rf "gh_${GITHUB_CLI_VERSION}_linux_${TARGETARCH}.deb"; \
+    gh --version;
+
+# Install rust targets for cross compiling for linux if CROSS_LINUX is non-empty
+RUN if [ ! -z "${CROSS_LINUX}" ]; then \
     apt-get install -y gcc-x86-64-linux-gnu gcc-aarch64-linux-gnu && \
     rustup target add x86_64-unknown-linux-gnu && \
     rustup target add aarch64-unknown-linux-gnu; \
@@ -32,6 +46,12 @@ RUN if [ ! -z "${CROSS_MACOS}" ]; then \
     UNATTENDED=yes OSX_VERSION_MIN=10.7 ./build.sh && \
     echo 'PATH="$PATH:/build/osxcross/target/bin"' >> /root/.bashrc && \
     ln -s /build/osxcross/target/SDK/MacOSX10.11.sdk/System/ /System; \
+  fi
+
+# Install windows targets and toolchain if CROSS_WINDOWS is non-empty
+RUN if [ ! -z "${CROSS_WINDOWS}" ]; then \
+    apt-get install -y gcc-mingw-w64-x86-64 zip && \
+    rustup target add x86_64-pc-windows-gnu; \
   fi
 
 # cargo install a dummy lib to force the crates.io index to update, so we can cache it.
