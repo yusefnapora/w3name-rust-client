@@ -316,8 +316,10 @@ impl PartialEq for WritableName {
         our_key_bytes == their_key_bytes
       }
 
-      // we only support Ed25519 keys, so if we have anything else, return false
-      _ => false,
+      // Since our dependency on libp2p-core doesn't include "extra" key types like RSA, etc,
+      // there's only one Keypair variant to match against. If we ever change the dependency
+      // to include the other key types, uncomment the line below:
+      // _ => false,
     }
   }
 }
