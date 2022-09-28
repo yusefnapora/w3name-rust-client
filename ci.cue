@@ -7,14 +7,6 @@ import (
 )
 
 dagger.#Plan & {
-	// mount the docker socket, for docker-in-docker cross compiling
-	client: network: "unix:///var/run/docker.sock": connect: dagger.#Socket
-
-	// read some env vars from the client 
-	client: env: {
-		RUST_TARGET: string | *"x86_64-unknown-linux-gnu",
-	}
-
 	client: filesystem: "./": read: {
 		contents: dagger.#FS
 		exclude: [
@@ -26,10 +18,8 @@ dagger.#Plan & {
 	}
 
 	client: filesystem: { 
-		"release-builds/linux_x86_64": write: contents: actions.release_build_linux.export.directories."/src/target/x86_64-unknown-linux-gnu/release"
-    "release-builds/linux_aarch64": write: contents: actions.release_build_linux.export.directories."/src/target/aarch64-unknown-linux-gnu/release"
-		"release-builds/macos_x86_64": write: contents: actions.release_build_mac.export.directories."/src/target/x86_64-apple-darwin/release"
-    "release-builds/macos_aarch64": write: contents: actions.release_build_mac.export.directories."/src/target/aarch64-apple-darwin/release"
+		"release-builds/linux": write: contents: actions.release_build_linux.export.directories."linux"
+		"release-builds/macos": write: contents: actions.release_build_mac.export.directories."macos"
 	}
 
 
@@ -55,8 +45,7 @@ dagger.#Plan & {
 			input: release_image_mac.output
 			workdir: "/src"
 			export: directories: {
-				"/src/target/aarch64-apple-darwin/release": dagger.#FS,
-				"/src/target/x86_64-apple-darwin/release": dagger.#FS,
+				"macos": dagger.#FS,
 			}
 			script: contents: #"""
 				CROSS_BIN=/build/osxcross/target/bin
@@ -67,14 +56,18 @@ dagger.#Plan & {
 
 				cargo build -p w3name-cli --release --target aarch64-apple-darwin
 				cargo build -p w3name-cli --release --target x86_64-apple-darwin
+
+				# make tarballs for each architecture
+				mkdir -p macos
+				tar -czf macos/w3name-cli-macos-x86_64.tar.gz -C target/x86_64-apple-darwin/release w3name
+				tar -czf macos/w3name-cli-macos-aarch64.tar.gz -C target/aarch64-apple-darwin/release w3name
 			"""#
 		}
 
 		release_build_linux: bash.#Run & {
 			input: release_image.output
 			export: directories: {
-				"/src/target/aarch64-unknown-linux-gnu/release": dagger.#FS,
-				"/src/target/x86_64-unknown-linux-gnu/release": dagger.#FS,
+				"linux": dagger.#FS
 			}
 			workdir: "/src"
 			script: contents: #"""
@@ -86,6 +79,11 @@ dagger.#Plan & {
 
 				cargo build -p w3name-cli --release --target aarch64-unknown-linux-gnu
 				cargo build -p w3name-cli --release --target x86_64-unknown-linux-gnu
+
+				# make tarballs for each architecture
+				mkdir -p linux
+				tar -czf linux/w3name-cli-linux-x86_64.tar.gz -C target/x86_64-unknown-linux-gnu/release w3name
+				tar -czf linux/w3name-cli-linux-aarch64.tar.gz -C target/aarch64-unknown-linux-gnu/release w3name
 			"""#
 		}
 
